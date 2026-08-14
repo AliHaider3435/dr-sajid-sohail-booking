@@ -10,6 +10,8 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: appointments
+    description: Appointment booking operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,58 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List appointment requests
+      description: Returns recent appointment requests for the clinic
+      responses:
+        "200":
+          description: Appointment requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Request an appointment
+      description: Creates a patient appointment request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AppointmentInput"
+      responses:
+        "201":
+          description: Appointment request created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "400":
+          description: Invalid appointment request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /appointments/availability:
+    get:
+      operationId: getAppointmentAvailability
+      tags: [appointments]
+      summary: Get appointment availability
+      description: Returns the clinic schedule and available visit types
+      responses:
+        "200":
+          description: Appointment availability
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Availability"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +87,117 @@ components:
           type: string
       required:
         - status
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: number
+        patientName:
+          type: string
+        phone:
+          type: string
+        email:
+          type: ["string", "null"]
+        visitType:
+          type: string
+        preferredDate:
+          type: string
+        preferredTime:
+          type: string
+        message:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [requested, confirmed, cancelled]
+        createdAt:
+          type: string
+      required:
+        - id
+        - patientName
+        - phone
+        - email
+        - visitType
+        - preferredDate
+        - preferredTime
+        - message
+        - status
+        - createdAt
+    AppointmentInput:
+      type: object
+      properties:
+        patientName:
+          type: string
+          minLength: 2
+        phone:
+          type: string
+          minLength: 7
+        email:
+          type: ["string", "null"]
+        visitType:
+          type: string
+          enum: [new-consultation, follow-up, second-opinion, spine-consultation]
+        preferredDate:
+          type: string
+        preferredTime:
+          type: string
+        message:
+          type: ["string", "null"]
+      required:
+        - patientName
+        - phone
+        - email
+        - visitType
+        - preferredDate
+        - preferredTime
+        - message
+    Availability:
+      type: object
+      properties:
+        clinicName:
+          type: string
+        phone:
+          type: string
+        hours:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClinicHour"
+        visitTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/VisitType"
+      required:
+        - clinicName
+        - phone
+        - hours
+        - visitTypes
+    ClinicHour:
+      type: object
+      properties:
+        day:
+          type: string
+        hours:
+          type: string
+      required:
+        - day
+        - hours
+    VisitType:
+      type: object
+      properties:
+        value:
+          type: string
+        label:
+          type: string
+        duration:
+          type: string
+      required:
+        - value
+        - label
+        - duration
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
 

@@ -1,6 +1,6 @@
-# [Project name]
+# Dr. Iqbal Kharal — Neurosurgeon
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A patient-facing website for Dr. Iqbal Kharal at Neuro Tower Multan, with clinic information, care areas, patient reviews, and appointment requests.
 
 ## Run & Operate
 
@@ -22,23 +22,32 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/web/src/pages/home.tsx` — patient-facing doctor profile and appointment experience
+- `artifacts/web/src/index.css` — shared visual theme and responsive styles
+- `lib/api-spec/openapi.yaml` — source of truth for appointment API contracts
+- `lib/db/src/schema/appointments.ts` — appointment request database model
+- `artifacts/api-server/src/routes/appointments.ts` — availability and appointment request routes
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Appointment requests are stored in the shared PostgreSQL database so they persist across refreshes and sessions.
+- Clinic availability is served through the API so the booking form and future staff tools share one source of truth.
+- The public booking flow creates a request rather than confirming a slot automatically; clinic staff can confirm it after reviewing the request.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Introduces Dr. Iqbal Kharal and his brain and spine care focus.
+- Shares Neuro Tower Multan location, phone number, clinic hours, services, and patient voices.
+- Lets patients request new consultations, follow-ups, second opinions, and spine consultations.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the experience professional, reassuring, and easy for patients to act on.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Run `pnpm --filter @workspace/api-spec run codegen` after changing the OpenAPI contract.
+- OpenAPI integer schemas currently generate `zod.int()`, which is incompatible with this workspace's Zod 3 runtime; use numeric schemas for generated API IDs unless the Zod setup changes.
 
 ## Pointers
 
