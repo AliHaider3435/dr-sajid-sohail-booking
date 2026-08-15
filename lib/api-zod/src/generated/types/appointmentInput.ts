@@ -5,18 +5,24 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { AppointmentInputVisitType } from './appointmentInputVisitType';
+import type { AppointmentInputAppointmentType } from './appointmentInputAppointmentType';
+import type { AppointmentInputClinicLocation } from './appointmentInputClinicLocation';
 
 export interface AppointmentInput {
+  clinicLocation: AppointmentInputClinicLocation;
+  /** @minLength 2 */
+  city: string;
   /** @minLength 2 */
   patientName: string;
   /** @minLength 7 */
   phone: string;
   /** @nullable */
   email: string | null;
-  visitType: AppointmentInputVisitType;
+  appointmentType: AppointmentInputAppointmentType;
   preferredDate: string;
   preferredTime: string;
   /** @nullable */
   message: string | null;
+  /** @nullable */
+  attachmentName: string | null;
 }

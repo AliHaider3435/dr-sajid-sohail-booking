@@ -5,12 +5,13 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
-import type { ClinicHour } from './clinicHour';
-import type { VisitType } from './visitType';
+import type { AppointmentType } from './appointmentType';
+import type { ClinicLocation } from './clinicLocation';
 
 export interface Availability {
-  clinicName: string;
   phone: string;
-  hours: ClinicHour[];
-  visitTypes: VisitType[];
+  emergencyPhone: string;
+  whatsappMessage: string[];
+  clinics: ClinicLocation[];
+  appointmentTypes: AppointmentType[];
 }

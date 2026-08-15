@@ -7,11 +7,16 @@
  */
 
 export * from './appointment';
+export * from './appointmentAppointmentType';
+export * from './appointmentClinicLocation';
 export * from './appointmentInput';
-export * from './appointmentInputVisitType';
+export * from './appointmentInputAppointmentType';
+export * from './appointmentInputClinicLocation';
 export * from './appointmentStatus';
+export * from './appointmentType';
+export * from './appointmentTypeValue';
 export * from './availability';
-export * from './clinicHour';
+export * from './clinicLocation';
+export * from './clinicSchedule';
 export * from './error';
 export * from './healthStatus';
-export * from './visitType';

@@ -32,34 +32,90 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form } from '@/components/ui/form';
+import { AppointmentModal as BookingModal } from '@/components/appointment-modal';
 
 const appointmentSchema = z.object({
+  clinicLocation: z.enum(['multan', 'layyah', 'dg-khan'], {
+    required_error: 'Please choose a clinic location.',
+  }),
+  city: z.string().min(2, 'Please enter your city.'),
   patientName: z.string().min(2, 'Please enter your full name.'),
   phone: z.string().min(7, 'Please enter a reachable phone number.'),
   email: z.string().email('Please enter a valid email.').or(z.literal('')),
-  visitType: z.string().min(1, 'Please choose a reason for your visit.'),
+  appointmentType: z.enum(['new-patient', 'follow-up', 'emergency-consultation'], {
+    required_error: 'Please choose an appointment type.',
+  }),
   preferredDate: z.string().min(1, 'Please select a preferred date.'),
   preferredTime: z.string().min(1, 'Please select a preferred time.'),
   message: z.string().max(500, 'Please keep this note under 500 characters.'),
+  attachmentName: z.string().nullable(),
 });
 
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
-const fallbackVisitTypes = [
-  { value: 'new-consultation', label: 'New consultation', duration: '30 min' },
-  { value: 'follow-up', label: 'Follow-up appointment', duration: '20 min' },
-  { value: 'second-opinion', label: 'Second opinion', duration: '30 min' },
-  { value: 'spine-consultation', label: 'Spine consultation', duration: '30 min' },
+const fallbackAppointmentTypes = [
+  { value: 'new-patient', label: 'New patient', description: 'Your first consultation with Dr. Kharal.' },
+  { value: 'follow-up', label: 'Follow-up patient', description: 'A review after a previous consultation or procedure.' },
+  { value: 'emergency-consultation', label: 'Emergency consultation', description: 'For urgent concerns; call the emergency number for immediate help.' },
 ];
 
-const fallbackHours = [
-  { day: 'Monday', hours: '4:00 pm – 8:00 pm' },
-  { day: 'Tuesday', hours: '4:00 pm – 8:00 pm' },
-  { day: 'Wednesday', hours: '4:00 pm – 8:00 pm' },
-  { day: 'Thursday', hours: '4:00 pm – 8:00 pm' },
-  { day: 'Friday', hours: '4:00 pm – 8:00 pm' },
-  { day: 'Saturday', hours: 'By appointment' },
+const fallbackVisitTypes = fallbackAppointmentTypes.map((type) => ({
+  ...type,
+  duration: '30 min',
+}));
+
+const fallbackClinics = [
+  {
+    id: 'multan',
+    name: 'Neuro Tower Multan',
+    city: 'Multan',
+    address: 'Ahmad Clinics, Al-Kareem Center, Nishtar Road, Multan',
+    mapsUrl: 'https://maps.google.com/maps?hl=en&gl=pk&um=1&ie=UTF-8&fb=1&entry=s&sa=X&ftid=0x393b33635472cbbf:0xb310c5afb8c46340',
+    schedule: [
+      { days: 'Monday, Wednesday, Thursday & Friday', hours: '5:00 PM – 7:00 PM', note: 'Clinic' },
+      { days: 'Saturday', hours: '2:00 PM – 3:00 PM', note: 'Clinic' },
+      { days: 'Friday', hours: '7:00 PM – 8:00 PM', note: 'Online consultation' },
+    ],
+    slots: ['5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM', '6:00 PM', '6:15 PM', '6:30 PM', '6:45 PM'],
+  },
+  {
+    id: 'dg-khan',
+    name: 'Khadija Hospital, Dera Ghazi Khan',
+    city: 'DG Khan',
+    address: 'Bank Islami wali gali, near KFC Hotel, opposite DHQ Hospital, Dera Ghazi Khan',
+    mapsUrl: 'https://maps.app.goo.gl/THSNESnMQAEt2qpa6?g_st=awb',
+    schedule: [{ days: 'First & third Tuesday of every month', hours: '2:00 PM – 6:00 PM', note: 'Clinic' }],
+    slots: ['2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM'],
+  },
+  {
+    id: 'layyah',
+    name: 'Kharl Medical Complex, Layyah',
+    city: 'Layyah',
+    address: 'Clinic of Dr Sajjad Kharl, opposite DHQ Hospital, Layyah',
+    mapsUrl: 'https://maps.google.com/?q=Kharl+Medical+Complex+Layyah',
+    schedule: [{ days: 'Second & fourth Sunday of every month', hours: '9:00 AM – 6:00 PM', note: 'Endoscopic brain & spine clinic' }],
+    slots: ['9:00 AM', '9:15 AM', '9:30 AM', '9:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM'],
+  },
 ];
+
+type ClinicSchedule = { days: string; hours: string; note: string | null };
+type Clinic = {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  mapsUrl: string;
+  schedule: ClinicSchedule[];
+  slots: string[];
+};
+type AppointmentType = { value: string; label: string; description: string };
+type AppointmentAvailability = {
+  phone: string;
+  emergencyPhone: string;
+  whatsappMessage: string[];
+  clinics: Clinic[];
+  appointmentTypes: AppointmentType[];
+};
 
 const reviews = [
   {
@@ -82,8 +138,8 @@ const reviews = [
   },
 ];
 
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
+function FieldError({ message }: { message?: unknown }) {
+  if (typeof message !== 'string' || !message) return null;
   return <p className="mt-1.5 text-xs font-medium text-[#b94b42]">{message}</p>;
 }
 
@@ -109,7 +165,7 @@ function BrandMark({ inverse = false }: { inverse?: boolean }) {
   );
 }
 
-function AppointmentModal({
+function LegacyAppointmentModal({
   open,
   onClose,
   availability,
@@ -126,7 +182,7 @@ function AppointmentModal({
   const queryClient = useQueryClient();
   const createAppointment = useCreateAppointment();
   const [submitted, setSubmitted] = useState(false);
-  const form = useForm<AppointmentFormValues>({
+  const form = useForm<any>({
     resolver: zodResolver(appointmentSchema),
     defaultValues: {
       patientName: '',
@@ -161,15 +217,18 @@ function AppointmentModal({
     }
   }, [form, open]);
 
-  const onSubmit = (values: AppointmentFormValues) => {
+  const onSubmit = (values: any) => {
     const payload: AppointmentInput = {
+      clinicLocation: 'multan',
+      city: 'Multan',
       patientName: values.patientName,
       phone: values.phone,
       email: values.email || null,
-      visitType: values.visitType as AppointmentInput['visitType'],
+      appointmentType: (values.visitType || 'new-patient') as AppointmentInput['appointmentType'],
       preferredDate: values.preferredDate,
       preferredTime: values.preferredTime,
       message: values.message || null,
+      attachmentName: null,
     };
     createAppointment.mutate(
       { data: payload },
@@ -308,9 +367,8 @@ function Home() {
   });
   const availability = availabilityQuery.data;
   const requestsInReview = appointmentsQuery.data?.length ?? 0;
-  const hours = availability?.hours?.length ? availability.hours : fallbackHours;
-  const clinicName = availability?.clinicName || 'Neuro Tower Multan';
-  const clinicPhone = availability?.phone || '+92 61 457 2030';
+  const clinics = availability?.clinics?.length ? availability.clinics : fallbackClinics;
+  const clinicPhone = availability?.phone || '03377628073';
 
   const openAppointment = () => {
     setMobileOpen(false);
@@ -491,21 +549,25 @@ function Home() {
             <button onClick={openAppointment} className="focus-ring mt-8 inline-flex items-center gap-2 rounded-full border border-[#9fbab3] px-5 py-3 text-sm font-bold text-[#197263] transition hover:-translate-y-0.5 hover:border-[#197263] hover:bg-[#e7f0ec]" data-testid="button-clinic-appointment">Plan your visit <ArrowUpRight className="size-4" /></button>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[24px] bg-[#e7f0ec] p-7 sm:col-span-2 sm:flex sm:items-center sm:justify-between" data-testid="card-clinic-location">
-              <div className="flex items-start gap-4">
-                <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#153247] text-[#f2c55f]"><MapPin className="size-5" /></div>
-                <div><p className="text-xs font-bold uppercase tracking-[.13em] text-[#197263]">Clinic address</p><p className="mt-2 text-lg font-bold text-[#153247]">{clinicName}</p><p className="mt-1 text-sm text-[#587078]">Bosan Road, Multan, Pakistan</p></div>
+            {clinics.map((clinic) => (
+              <div key={clinic.id} className="rounded-[24px] bg-[#e7f0ec] p-7 sm:col-span-2 sm:flex sm:items-start sm:justify-between" data-testid={`card-clinic-location-${clinic.id}`}>
+                <div className="flex items-start gap-4">
+                  <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#153247] text-[#f2c55f]"><MapPin className="size-5" /></div>
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[.13em] text-[#197263]">{clinic.city} clinic</p>
+                    <p className="mt-2 text-lg font-bold text-[#153247]">{clinic.name}</p>
+                    <p className="mt-1 max-w-xl text-sm leading-6 text-[#587078]">{clinic.address}</p>
+                    <div className="mt-4 grid gap-1.5 text-xs text-[#315b61]">{clinic.schedule.map((item) => <p key={`${clinic.id}-${item.days}`}><span className="font-bold">{item.days}:</span> {item.hours}{item.note ? ` · ${item.note}` : ''}</p>)}</div>
+                  </div>
+                </div>
+                <a href={clinic.mapsUrl} target="_blank" rel="noreferrer" className="focus-ring mt-5 inline-flex shrink-0 items-center gap-2 text-sm font-bold text-[#197263] sm:mt-1" data-testid={`link-clinic-directions-${clinic.id}`}>Get directions <ArrowUpRight className="size-4" /></a>
               </div>
-              <a href="https://maps.google.com/?q=Neuro+Tower+Multan" target="_blank" rel="noreferrer" className="focus-ring mt-5 inline-flex items-center gap-2 text-sm font-bold text-[#197263] sm:mt-0" data-testid="link-clinic-directions">Get directions <ArrowUpRight className="size-4" /></a>
-            </div>
+            ))}
             <div className="rounded-[24px] border border-[#d6e1dd] bg-[#fbf8f0] p-7" data-testid="card-clinic-hours">
-              <div className="flex items-center gap-3"><Clock3 className="size-5 text-[#197263]" /><p className="text-xs font-bold uppercase tracking-[.13em] text-[#197263]">Clinic hours</p></div>
-              {availabilityQuery.isLoading ? (
-                <div className="mt-5 space-y-3" data-testid="skeleton-clinic-hours"><div className="h-3 w-full animate-pulse rounded bg-[#dfe9e4]" /><div className="h-3 w-4/5 animate-pulse rounded bg-[#dfe9e4]" /><div className="h-3 w-3/5 animate-pulse rounded bg-[#dfe9e4]" /></div>
-              ) : (
-                <div className="mt-5 space-y-2.5">{hours.slice(0, 5).map((item) => <div key={item.day} className="flex justify-between gap-3 text-sm"><span className="text-[#718287]">{item.day}</span><span className="font-semibold text-[#31505b]">{item.hours}</span></div>)}</div>
-              )}
-              {availabilityQuery.isError && <p className="mt-4 text-xs text-[#a17525]" data-testid="status-hours-fallback">Showing usual clinic hours.</p>}
+              <div className="flex items-center gap-3"><Clock3 className="size-5 text-[#197263]" /><p className="text-xs font-bold uppercase tracking-[.13em] text-[#197263]">Clinic schedule</p></div>
+              <p className="mt-5 text-sm leading-6 text-[#718287]">Appointments are offered on selected clinic days in Multan, DG Khan, and Layyah. Choose your location in the booking form to see the next available dates and 15-minute slots.</p>
+              <div className="mt-5 rounded-xl bg-[#e7f0ec] px-4 py-3 text-xs leading-5 text-[#315b61]">Online consultation: Friday, 7:00 PM – 8:00 PM</div>
+              {availabilityQuery.isError && <p className="mt-4 text-xs text-[#a17525]" data-testid="status-hours-fallback">Showing the usual clinic schedule.</p>}
             </div>
             <div className="rounded-[24px] bg-[#153247] p-7 text-[#fbf8f0]" data-testid="card-clinic-contact">
               <div className="flex items-center gap-3"><Phone className="size-5 text-[#f2c55f]" /><p className="text-xs font-bold uppercase tracking-[.13em] text-[#f2c55f]">Speak to the team</p></div>
@@ -549,7 +611,7 @@ function Home() {
         <div className="border-t border-[#274658]"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[#6f9198] sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>© {new Date().getFullYear()} Dr. Iqbal Kharal · Neuro Tower Multan</span><span>For urgent symptoms, please visit your nearest emergency department.</span></div></div>
       </footer>
 
-      <AppointmentModal open={appointmentOpen} onClose={() => setAppointmentOpen(false)} availability={availability} />
+      <BookingModal open={appointmentOpen} onClose={() => setAppointmentOpen(false)} availability={availability} />
     </main>
   );
 }

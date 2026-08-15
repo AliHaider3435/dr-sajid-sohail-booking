@@ -5,19 +5,25 @@
  * API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AppointmentAppointmentType } from './appointmentAppointmentType';
+import type { AppointmentClinicLocation } from './appointmentClinicLocation';
 import type { AppointmentStatus } from './appointmentStatus';
 
 export interface Appointment {
   id: number;
+  clinicLocation: AppointmentClinicLocation;
+  city: string;
   patientName: string;
   phone: string;
   /** @nullable */
   email: string | null;
-  visitType: string;
+  appointmentType: AppointmentAppointmentType;
   preferredDate: string;
   preferredTime: string;
   /** @nullable */
   message: string | null;
+  /** @nullable */
+  attachmentName: string | null;
   status: AppointmentStatus;
   createdAt: string;
 }

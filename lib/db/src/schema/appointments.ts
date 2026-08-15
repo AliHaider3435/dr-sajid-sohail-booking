@@ -4,13 +4,17 @@ import { z } from "zod/v4";
 
 export const appointmentsTable = pgTable("appointments", {
   id: serial("id").primaryKey(),
+  clinicLocation: text("clinic_location").notNull().default("multan"),
+  city: text("city").notNull().default("Multan"),
   patientName: text("patient_name").notNull(),
   phone: text("phone").notNull(),
   email: text("email"),
-  visitType: text("visit_type").notNull(),
+  visitType: text("visit_type").notNull().default("new-patient"),
+  appointmentType: text("appointment_type").notNull().default("new-patient"),
   preferredDate: date("preferred_date", { mode: "string" }).notNull(),
   preferredTime: text("preferred_time").notNull(),
   message: text("message"),
+  attachmentName: text("attachment_name"),
   status: text("status").notNull().default("requested"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
@@ -19,6 +23,10 @@ export const appointmentsTable = pgTable("appointments", {
 
 export const insertAppointmentSchema = createInsertSchema(appointmentsTable).omit({
   id: true,
+  clinicLocation: true,
+  city: true,
+  visitType: true,
+  appointmentType: true,
   status: true,
   createdAt: true,
 });

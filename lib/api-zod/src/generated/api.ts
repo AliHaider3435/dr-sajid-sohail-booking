@@ -23,13 +23,16 @@ export const HealthCheckResponse = zod.object({
  */
 export const ListAppointmentsResponseItem = zod.object({
   "id": zod.number(),
+  "clinicLocation": zod.enum(['multan', 'layyah', 'dg-khan']),
+  "city": zod.string(),
   "patientName": zod.string(),
   "phone": zod.string(),
   "email": zod.string().nullable(),
-  "visitType": zod.string(),
+  "appointmentType": zod.enum(['new-patient', 'follow-up', 'emergency-consultation']),
   "preferredDate": zod.string(),
   "preferredTime": zod.string(),
   "message": zod.string().nullable(),
+  "attachmentName": zod.string().nullable(),
   "status": zod.enum(['requested', 'confirmed', 'cancelled']),
   "createdAt": zod.string()
 })
@@ -40,6 +43,8 @@ export const ListAppointmentsResponse = zod.array(ListAppointmentsResponseItem)
  * Creates a patient appointment request
  * @summary Request an appointment
  */
+export const createAppointmentBodyCityMin = 2;
+
 export const createAppointmentBodyPatientNameMin = 2;
 
 export const createAppointmentBodyPhoneMin = 7;
@@ -47,24 +52,30 @@ export const createAppointmentBodyPhoneMin = 7;
 
 
 export const CreateAppointmentBody = zod.object({
+  "clinicLocation": zod.enum(['multan', 'layyah', 'dg-khan']),
+  "city": zod.string().min(createAppointmentBodyCityMin),
   "patientName": zod.string().min(createAppointmentBodyPatientNameMin),
   "phone": zod.string().min(createAppointmentBodyPhoneMin),
   "email": zod.string().nullable(),
-  "visitType": zod.enum(['new-consultation', 'follow-up', 'second-opinion', 'spine-consultation']),
+  "appointmentType": zod.enum(['new-patient', 'follow-up', 'emergency-consultation']),
   "preferredDate": zod.string(),
   "preferredTime": zod.string(),
-  "message": zod.string().nullable()
+  "message": zod.string().nullable(),
+  "attachmentName": zod.string().nullable()
 })
 
 export const CreateAppointmentResponse = zod.object({
   "id": zod.number(),
+  "clinicLocation": zod.enum(['multan', 'layyah', 'dg-khan']),
+  "city": zod.string(),
   "patientName": zod.string(),
   "phone": zod.string(),
   "email": zod.string().nullable(),
-  "visitType": zod.string(),
+  "appointmentType": zod.enum(['new-patient', 'follow-up', 'emergency-consultation']),
   "preferredDate": zod.string(),
   "preferredTime": zod.string(),
   "message": zod.string().nullable(),
+  "attachmentName": zod.string().nullable(),
   "status": zod.enum(['requested', 'confirmed', 'cancelled']),
   "createdAt": zod.string()
 })
@@ -75,16 +86,27 @@ export const CreateAppointmentResponse = zod.object({
  * @summary Get appointment availability
  */
 export const GetAppointmentAvailabilityResponse = zod.object({
-  "clinicName": zod.string(),
   "phone": zod.string(),
-  "hours": zod.array(zod.object({
-  "day": zod.string(),
-  "hours": zod.string()
+  "emergencyPhone": zod.string(),
+  "whatsappMessage": zod.array(zod.string()),
+  "clinics": zod.array(zod.object({
+  "id": zod.string(),
+  "day": zod.string().optional(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "address": zod.string(),
+  "mapsUrl": zod.string(),
+  "schedule": zod.array(zod.object({
+  "days": zod.string(),
+  "hours": zod.string(),
+  "note": zod.string().nullable()
 })),
-  "visitTypes": zod.array(zod.object({
-  "value": zod.string(),
+  "slots": zod.array(zod.string())
+})),
+  "appointmentTypes": zod.array(zod.object({
+  "value": zod.enum(['new-patient', 'follow-up', 'emergency-consultation']),
   "label": zod.string(),
-  "duration": zod.string()
+  "description": zod.string()
 }))
 })
 

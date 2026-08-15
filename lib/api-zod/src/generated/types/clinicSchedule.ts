@@ -6,8 +6,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface VisitType {
-  value: string;
-  label: string;
-  duration: string;
+export interface ClinicSchedule {
+  days: string;
+  hours: string;
+  /** @nullable */
+  note: string | null;
 }

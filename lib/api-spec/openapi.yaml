@@ -92,19 +92,27 @@ components:
       properties:
         id:
           type: number
+        clinicLocation:
+          type: string
+          enum: [multan, layyah, dg-khan]
+        city:
+          type: string
         patientName:
           type: string
         phone:
           type: string
         email:
           type: ["string", "null"]
-        visitType:
+        appointmentType:
           type: string
+          enum: [new-patient, follow-up, emergency-consultation]
         preferredDate:
           type: string
         preferredTime:
           type: string
         message:
+          type: ["string", "null"]
+        attachmentName:
           type: ["string", "null"]
         status:
           type: string
@@ -113,18 +121,27 @@ components:
           type: string
       required:
         - id
+        - clinicLocation
+        - city
         - patientName
         - phone
         - email
-        - visitType
+        - appointmentType
         - preferredDate
         - preferredTime
         - message
+        - attachmentName
         - status
         - createdAt
     AppointmentInput:
       type: object
       properties:
+        clinicLocation:
+          type: string
+          enum: [multan, layyah, dg-khan]
+        city:
+          type: string
+          minLength: 2
         patientName:
           type: string
           minLength: 2
@@ -133,66 +150,111 @@ components:
           minLength: 7
         email:
           type: ["string", "null"]
-        visitType:
+        appointmentType:
           type: string
-          enum: [new-consultation, follow-up, second-opinion, spine-consultation]
+          enum: [new-patient, follow-up, emergency-consultation]
         preferredDate:
           type: string
         preferredTime:
           type: string
         message:
           type: ["string", "null"]
+        attachmentName:
+          type: ["string", "null"]
       required:
+        - clinicLocation
+        - city
         - patientName
         - phone
         - email
-        - visitType
+        - appointmentType
         - preferredDate
         - preferredTime
         - message
+        - attachmentName
     Availability:
       type: object
       properties:
-        clinicName:
-          type: string
         phone:
           type: string
-        hours:
+        emergencyPhone:
+          type: string
+        whatsappMessage:
           type: array
           items:
-            $ref: "#/components/schemas/ClinicHour"
-        visitTypes:
+            type: string
+        clinics:
           type: array
           items:
-            $ref: "#/components/schemas/VisitType"
+            $ref: "#/components/schemas/ClinicLocation"
+        appointmentTypes:
+          type: array
+          items:
+            $ref: "#/components/schemas/AppointmentType"
       required:
-        - clinicName
         - phone
-        - hours
-        - visitTypes
-    ClinicHour:
+        - emergencyPhone
+        - whatsappMessage
+        - clinics
+        - appointmentTypes
+    ClinicLocation:
       type: object
       properties:
+        id:
+          type: string
         day:
+          type: string
+        name:
+          type: string
+        city:
+          type: string
+        address:
+          type: string
+        mapsUrl:
+          type: string
+        schedule:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClinicSchedule"
+        slots:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - city
+        - address
+        - mapsUrl
+        - schedule
+        - slots
+    ClinicSchedule:
+      type: object
+      properties:
+        days:
           type: string
         hours:
           type: string
+        note:
+          type: ["string", "null"]
       required:
-        - day
+        - days
         - hours
-    VisitType:
+        - note
+    AppointmentType:
       type: object
       properties:
         value:
           type: string
+          enum: [new-patient, follow-up, emergency-consultation]
         label:
           type: string
-        duration:
+        description:
           type: string
       required:
         - value
         - label
-        - duration
+        - description
     Error:
       type: object
       properties:

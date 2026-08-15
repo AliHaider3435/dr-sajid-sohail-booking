@@ -9,6 +9,24 @@ export interface HealthStatus {
   status: string;
 }
 
+export type AppointmentClinicLocation = typeof AppointmentClinicLocation[keyof typeof AppointmentClinicLocation];
+
+
+export const AppointmentClinicLocation = {
+  multan: 'multan',
+  layyah: 'layyah',
+  'dg-khan': 'dg-khan',
+} as const;
+
+export type AppointmentAppointmentType = typeof AppointmentAppointmentType[keyof typeof AppointmentAppointmentType];
+
+
+export const AppointmentAppointmentType = {
+  'new-patient': 'new-patient',
+  'follow-up': 'follow-up',
+  'emergency-consultation': 'emergency-consultation',
+} as const;
+
 export type AppointmentStatus = typeof AppointmentStatus[keyof typeof AppointmentStatus];
 
 
@@ -20,59 +38,99 @@ export const AppointmentStatus = {
 
 export interface Appointment {
   id: number;
+  clinicLocation: AppointmentClinicLocation;
+  city: string;
   patientName: string;
   phone: string;
   /** @nullable */
   email: string | null;
-  visitType: string;
+  appointmentType: AppointmentAppointmentType;
   preferredDate: string;
   preferredTime: string;
   /** @nullable */
   message: string | null;
+  /** @nullable */
+  attachmentName: string | null;
   status: AppointmentStatus;
   createdAt: string;
 }
 
-export type AppointmentInputVisitType = typeof AppointmentInputVisitType[keyof typeof AppointmentInputVisitType];
+export type AppointmentInputClinicLocation = typeof AppointmentInputClinicLocation[keyof typeof AppointmentInputClinicLocation];
 
 
-export const AppointmentInputVisitType = {
-  'new-consultation': 'new-consultation',
+export const AppointmentInputClinicLocation = {
+  multan: 'multan',
+  layyah: 'layyah',
+  'dg-khan': 'dg-khan',
+} as const;
+
+export type AppointmentInputAppointmentType = typeof AppointmentInputAppointmentType[keyof typeof AppointmentInputAppointmentType];
+
+
+export const AppointmentInputAppointmentType = {
+  'new-patient': 'new-patient',
   'follow-up': 'follow-up',
-  'second-opinion': 'second-opinion',
-  'spine-consultation': 'spine-consultation',
+  'emergency-consultation': 'emergency-consultation',
 } as const;
 
 export interface AppointmentInput {
+  clinicLocation: AppointmentInputClinicLocation;
+  /** @minLength 2 */
+  city: string;
   /** @minLength 2 */
   patientName: string;
   /** @minLength 7 */
   phone: string;
   /** @nullable */
   email: string | null;
-  visitType: AppointmentInputVisitType;
+  appointmentType: AppointmentInputAppointmentType;
   preferredDate: string;
   preferredTime: string;
   /** @nullable */
   message: string | null;
+  /** @nullable */
+  attachmentName: string | null;
 }
 
-export interface ClinicHour {
-  day: string;
+export interface ClinicSchedule {
+  days: string;
   hours: string;
+  /** @nullable */
+  note: string | null;
 }
 
-export interface VisitType {
-  value: string;
+export interface ClinicLocation {
+  id: string;
+  day?: string;
+  name: string;
+  city: string;
+  address: string;
+  mapsUrl: string;
+  schedule: ClinicSchedule[];
+  slots: string[];
+}
+
+export type AppointmentTypeValue = typeof AppointmentTypeValue[keyof typeof AppointmentTypeValue];
+
+
+export const AppointmentTypeValue = {
+  'new-patient': 'new-patient',
+  'follow-up': 'follow-up',
+  'emergency-consultation': 'emergency-consultation',
+} as const;
+
+export interface AppointmentType {
+  value: AppointmentTypeValue;
   label: string;
-  duration: string;
+  description: string;
 }
 
 export interface Availability {
-  clinicName: string;
   phone: string;
-  hours: ClinicHour[];
-  visitTypes: VisitType[];
+  emergencyPhone: string;
+  whatsappMessage: string[];
+  clinics: ClinicLocation[];
+  appointmentTypes: AppointmentType[];
 }
 
 export interface Error {
