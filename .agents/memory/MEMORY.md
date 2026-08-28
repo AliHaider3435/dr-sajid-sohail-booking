@@ -1,1 +1,0 @@
-- [OpenAPI numeric IDs](openapi-zod-compatibility.md) — this workspace's Zod 3 runtime cannot consume generated `zod.int()` schemas from OpenAPI integer fields.
