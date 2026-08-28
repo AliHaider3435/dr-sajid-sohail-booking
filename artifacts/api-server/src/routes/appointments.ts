@@ -1,4 +1,4 @@
-import { Router, type IRouter } from "express";
+import { Router, type Request, type Response } from "express";
 import { desc } from "drizzle-orm";
 import { db, appointmentsTable } from "@workspace/db";
 import {
@@ -7,8 +7,9 @@ import {
   GetAppointmentAvailabilityResponse,
   ListAppointmentsResponse,
 } from "@workspace/api-zod";
+import { logger } from "../lib/logger.js";
 
-const router: IRouter = Router();
+const router = Router();
 
 const availability = {
   phone: "+92 337 7628073",
@@ -31,13 +32,31 @@ const availability = {
       mapsUrl:
         "https://maps.google.com/maps?hl=en&gl=pk&um=1&ie=UTF-8&fb=1&entry=s&sa=X&ftid=0x393b33635472cbbf:0xb310c5afb8c46340",
       schedule: [
-        { days: "Monday, Wednesday, Thursday & Friday", hours: "5:00 PM – 7:00 PM", note: "Clinic" },
-        { days: "Saturday", hours: "2:00 PM – 3:00 PM", note: "Clinic" },
-        { days: "Friday", hours: "7:00 PM – 8:00 PM", note: "Online consultation" },
+        {
+          days: "Monday, Wednesday, Thursday & Friday",
+          hours: "5:00 PM – 7:00 PM",
+          note: "Clinic",
+        },
+        {
+          days: "Saturday",
+          hours: "2:00 PM – 3:00 PM",
+          note: "Clinic",
+        },
+        {
+          days: "Friday",
+          hours: "7:00 PM – 8:00 PM",
+          note: "Online consultation",
+        },
       ],
       slots: [
-        "5:00 PM", "5:15 PM", "5:30 PM", "5:45 PM",
-        "6:00 PM", "6:15 PM", "6:30 PM", "6:45 PM",
+        "5:00 PM",
+        "5:15 PM",
+        "5:30 PM",
+        "5:45 PM",
+        "6:00 PM",
+        "6:15 PM",
+        "6:30 PM",
+        "6:45 PM",
       ],
     },
     {
@@ -55,10 +74,22 @@ const availability = {
         },
       ],
       slots: [
-        "2:00 PM", "2:15 PM", "2:30 PM", "2:45 PM",
-        "3:00 PM", "3:15 PM", "3:30 PM", "3:45 PM",
-        "4:00 PM", "4:15 PM", "4:30 PM", "4:45 PM",
-        "5:00 PM", "5:15 PM", "5:30 PM", "5:45 PM",
+        "2:00 PM",
+        "2:15 PM",
+        "2:30 PM",
+        "2:45 PM",
+        "3:00 PM",
+        "3:15 PM",
+        "3:30 PM",
+        "3:45 PM",
+        "4:00 PM",
+        "4:15 PM",
+        "4:30 PM",
+        "4:45 PM",
+        "5:00 PM",
+        "5:15 PM",
+        "5:30 PM",
+        "5:45 PM",
       ],
     },
     {
@@ -76,15 +107,42 @@ const availability = {
         },
       ],
       slots: [
-        "9:00 AM", "9:15 AM", "9:30 AM", "9:45 AM",
-        "10:00 AM", "10:15 AM", "10:30 AM", "10:45 AM",
-        "11:00 AM", "11:15 AM", "11:30 AM", "11:45 AM",
-        "12:00 PM", "12:15 PM", "12:30 PM", "12:45 PM",
-        "1:00 PM", "1:15 PM", "1:30 PM", "1:45 PM",
-        "2:00 PM", "2:15 PM", "2:30 PM", "2:45 PM",
-        "3:00 PM", "3:15 PM", "3:30 PM", "3:45 PM",
-        "4:00 PM", "4:15 PM", "4:30 PM", "4:45 PM",
-        "5:00 PM", "5:15 PM", "5:30 PM", "5:45 PM",
+        "9:00 AM",
+        "9:15 AM",
+        "9:30 AM",
+        "9:45 AM",
+        "10:00 AM",
+        "10:15 AM",
+        "10:30 AM",
+        "10:45 AM",
+        "11:00 AM",
+        "11:15 AM",
+        "11:30 AM",
+        "11:45 AM",
+        "12:00 PM",
+        "12:15 PM",
+        "12:30 PM",
+        "12:45 PM",
+        "1:00 PM",
+        "1:15 PM",
+        "1:30 PM",
+        "1:45 PM",
+        "2:00 PM",
+        "2:15 PM",
+        "2:30 PM",
+        "2:45 PM",
+        "3:00 PM",
+        "3:15 PM",
+        "3:30 PM",
+        "3:45 PM",
+        "4:00 PM",
+        "4:15 PM",
+        "4:30 PM",
+        "4:45 PM",
+        "5:00 PM",
+        "5:15 PM",
+        "5:30 PM",
+        "5:45 PM",
       ],
     },
   ],
@@ -97,68 +155,109 @@ const availability = {
     {
       value: "follow-up",
       label: "Follow-up patient",
-      description: "A review after a previous consultation or procedure.",
+      description:
+        "A review after a previous consultation or procedure.",
     },
     {
       value: "emergency-consultation",
       label: "Emergency consultation",
-      description: "For urgent concerns; call the emergency number for immediate help.",
+      description:
+        "For urgent concerns; call the emergency number for immediate help.",
     },
   ],
 } as const;
 
-function serializeAppointment(appointment: typeof appointmentsTable.$inferSelect) {
+function serializeAppointment(
+  appointment: typeof appointmentsTable.$inferSelect,
+) {
   return {
     ...appointment,
     createdAt: appointment.createdAt.toISOString(),
     clinicLocation: appointment.clinicLocation || "multan",
     city: appointment.city || "Multan",
-    appointmentType: appointment.appointmentType || appointment.visitType || "new-patient",
+    appointmentType:
+      appointment.appointmentType ||
+      appointment.visitType ||
+      "new-patient",
     attachmentName: appointment.attachmentName || null,
   };
 }
 
-router.get("/appointments", async (req, res): Promise<void> => {
-  req.log.info("Fetching appointment requests");
-  const appointments = await db
-    .select()
-    .from(appointmentsTable)
-    .orderBy(desc(appointmentsTable.createdAt));
+router.get(
+  "/appointments",
+  async (_req: Request, res: Response): Promise<void> => {
+    logger.info("Fetching appointment requests");
 
-  res.json(ListAppointmentsResponse.parse(appointments.map(serializeAppointment)));
-});
+    const appointments = await db
+      .select()
+      .from(appointmentsTable)
+      .orderBy(desc(appointmentsTable.createdAt));
 
-router.post("/appointments", async (req, res): Promise<void> => {
-  const parsed = CreateAppointmentBody.safeParse(req.body);
-  if (!parsed.success) {
-    req.log.warn({ errors: parsed.error.message }, "Invalid appointment request");
-    res.status(400).json({ error: parsed.error.message });
-    return;
-  }
+    res.json(
+      ListAppointmentsResponse.parse(
+        appointments.map(serializeAppointment),
+      ),
+    );
+  },
+);
 
-  const [appointment] = await db
-    .insert(appointmentsTable)
-    .values({
-      clinicLocation: parsed.data.clinicLocation,
-      city: parsed.data.city,
-      patientName: parsed.data.patientName,
-      phone: parsed.data.phone,
-      email: parsed.data.email,
-      visitType: parsed.data.appointmentType,
-      appointmentType: parsed.data.appointmentType,
-      preferredDate: parsed.data.preferredDate,
-      preferredTime: parsed.data.preferredTime,
-      message: parsed.data.message,
-      attachmentName: parsed.data.attachmentName,
-    })
-    .returning();
+router.post(
+  "/appointments",
+  async (req: Request, res: Response): Promise<void> => {
+    const parsed = CreateAppointmentBody.safeParse(req.body);
 
-  req.log.info({ appointmentId: appointment.id }, "Appointment request created");
-  res.status(201).json(CreateAppointmentResponse.parse(serializeAppointment(appointment)));
-});
+    if (!parsed.success) {
+      logger.warn(
+        { errors: parsed.error.message },
+        "Invalid appointment request",
+      );
 
-router.get("/appointments/availability", (_req, res): void => {
-  res.json(GetAppointmentAvailabilityResponse.parse(availability));
-});
+      res.status(400).json({
+        error: parsed.error.message,
+      });
+
+      return;
+    }
+
+    const [appointment] = await db
+      .insert(appointmentsTable)
+      .values({
+        clinicLocation: parsed.data.clinicLocation,
+        city: parsed.data.city,
+        patientName: parsed.data.patientName,
+        phone: parsed.data.phone,
+        email: parsed.data.email,
+        visitType: parsed.data.appointmentType,
+        appointmentType: parsed.data.appointmentType,
+        preferredDate: parsed.data.preferredDate,
+        preferredTime: parsed.data.preferredTime,
+        message: parsed.data.message,
+        attachmentName: parsed.data.attachmentName,
+      })
+      .returning();
+
+    logger.info(
+      { appointmentId: appointment.id },
+      "Appointment request created",
+    );
+
+    res
+      .status(201)
+      .json(
+        CreateAppointmentResponse.parse(
+          serializeAppointment(appointment),
+        ),
+      );
+  },
+);
+
+router.get(
+  "/appointments/availability",
+  (_req: Request, res: Response): void => {
+    res.json(
+      GetAppointmentAvailabilityResponse.parse(availability),
+    );
+  },
+);
 
 export default router;
