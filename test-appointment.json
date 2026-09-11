@@ -1,0 +1,12 @@
+﻿{
+  "clinicLocation": "multan",
+  "city": "Multan",
+  "patientName": "Test Patient",
+  "phone": "03001234567",
+  "email": "test@example.com",
+  "appointmentType": "new-patient",
+  "preferredDate": "2026-09-20",
+  "preferredTime": "5:00 PM",
+  "message": "Supabase API test",
+  "attachmentName": null
+}
