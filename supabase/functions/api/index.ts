@@ -10,7 +10,7 @@ const corsHeaders = {
 };
 
 const CreateAppointmentBody = z.object({
-  clinicLocation: z.enum(["multan", "layyah", "dg-khan"]),
+  clinicLocation: z.enum(["layyah"]),
   city: z.string().min(2),
   patientName: z.string().min(2),
   phone: z.string().min(7),
@@ -32,47 +32,38 @@ const CreateAppointmentBody = z.object({
 });
 
 const availability = {
-  phone: "+92 337 7628073",
+  phone: "0300 5809938",
   emergencyPhone: "0337 762873",
   whatsappMessage: [
     "Assalam o Alaikum",
-    "Welcome to Dr Iqbal Ahmad Kharal Neurosurgery Clinics.",
-    "Please choose your clinic:",
-    "1. Multan",
-    "2. Layyah",
-    "3. DG Khan",
-    "Reply with 1, 2, or 3.",
+    "Welcome to Dr Sajid Sohail Neurosurgery Clinics.",
+    "Your clinic location is Layyah.",
+    "Reply BOOK to start an appointment request.",
   ],
 
   clinics: [
     {
-      id: "multan",
-      name: "Neuro Tower Multan",
-      city: "Multan",
+      id: "layyah",
+      name: "Rahmania Medical Center, Layyah",
+      city: "Layyah",
       address:
-        "Ahmad Clinics, Al-Kareem Center, Nishtar Road, Multan",
+        "Employees Colony, Layyah",
       mapsUrl:
-        "https://maps.google.com/maps?hl=en&gl=pk&um=1&ie=UTF-8&fb=1&entry=s&sa=X&ftid=0x393b33635472cbbf:0xb310c5afb8c46340",
+        "https://www.google.com/maps/dir/?api=1&destination=30.9723221%2C70.9651555",
 
       schedule: [
         {
-          days: "Monday, Wednesday, Thursday & Friday",
-          hours: "5:00 PM – 7:00 PM",
-          note: "Clinic",
-        },
-        {
-          days: "Saturday",
-          hours: "2:00 PM – 3:00 PM",
-          note: "Clinic",
-        },
-        {
-          days: "Friday",
-          hours: "7:00 PM – 8:00 PM",
-          note: "Online consultation",
+          days: "Daily",
+          hours: "4:00 PM – 8:00 PM",
+          note: "Endoscopic brain & spine clinic",
         },
       ],
 
       slots: [
+        "4:00 PM",
+        "4:15 PM",
+        "4:30 PM",
+        "4:45 PM",
         "5:00 PM",
         "5:15 PM",
         "5:30 PM",
@@ -81,100 +72,11 @@ const availability = {
         "6:15 PM",
         "6:30 PM",
         "6:45 PM",
-      ],
-    },
-
-    {
-      id: "dg-khan",
-      name: "Khadija Hospital, Dera Ghazi Khan",
-      city: "DG Khan",
-      address:
-        "Bank Islami wali gali, near KFC Hotel, opposite DHQ Hospital, Dera Ghazi Khan",
-      mapsUrl:
-        "https://maps.app.goo.gl/THSNESnMQAEt2qpa6?g_st=awb",
-
-      schedule: [
-        {
-          days: "First & third Tuesday of every month",
-          hours: "2:00 PM – 6:00 PM",
-          note: "Clinic",
-        },
-      ],
-
-      slots: [
-        "2:00 PM",
-        "2:15 PM",
-        "2:30 PM",
-        "2:45 PM",
-        "3:00 PM",
-        "3:15 PM",
-        "3:30 PM",
-        "3:45 PM",
-        "4:00 PM",
-        "4:15 PM",
-        "4:30 PM",
-        "4:45 PM",
-        "5:00 PM",
-        "5:15 PM",
-        "5:30 PM",
-        "5:45 PM",
-      ],
-    },
-
-    {
-      id: "layyah",
-      name: "Kharl Medical Complex, Layyah",
-      city: "Layyah",
-      address:
-        "Clinic of Dr Sajjad Kharl, opposite DHQ Hospital, Layyah",
-      mapsUrl:
-        "https://maps.google.com/?q=Kharl+Medical+Complex+Layyah",
-
-      schedule: [
-        {
-          days: "Second & fourth Sunday of every month",
-          hours: "9:00 AM – 6:00 PM",
-          note: "Endoscopic brain & spine clinic",
-        },
-      ],
-
-      slots: [
-        "9:00 AM",
-        "9:15 AM",
-        "9:30 AM",
-        "9:45 AM",
-        "10:00 AM",
-        "10:15 AM",
-        "10:30 AM",
-        "10:45 AM",
-        "11:00 AM",
-        "11:15 AM",
-        "11:30 AM",
-        "11:45 AM",
-        "12:00 PM",
-        "12:15 PM",
-        "12:30 PM",
-        "12:45 PM",
-        "1:00 PM",
-        "1:15 PM",
-        "1:30 PM",
-        "1:45 PM",
-        "2:00 PM",
-        "2:15 PM",
-        "2:30 PM",
-        "2:45 PM",
-        "3:00 PM",
-        "3:15 PM",
-        "3:30 PM",
-        "3:45 PM",
-        "4:00 PM",
-        "4:15 PM",
-        "4:30 PM",
-        "4:45 PM",
-        "5:00 PM",
-        "5:15 PM",
-        "5:30 PM",
-        "5:45 PM",
+        "7:00 PM",
+        "7:15 PM",
+        "7:30 PM",
+        "7:45 PM",
+        "8:00 PM",
       ],
     },
   ],
@@ -184,7 +86,7 @@ const availability = {
       value: "new-patient",
       label: "New patient",
       description:
-        "Your first consultation with Dr. Kharal.",
+        "Your first consultation with Dr. Sajid Sohail.",
     },
     {
       value: "follow-up",
@@ -220,8 +122,8 @@ function serializeAppointment(
   return {
     id: appointment.id,
     clinicLocation:
-      appointment.clinic_location || "multan",
-    city: appointment.city || "Multan",
+      appointment.clinic_location || "layyah",
+    city: appointment.city || "Layyah",
     patientName: appointment.patient_name,
     phone: appointment.phone,
     email: appointment.email ?? null,

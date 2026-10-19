@@ -12,17 +12,17 @@ import {
   ArrowUpRight,
   BadgeCheck,
   Brain,
+  CalendarDays,
   Check,
   ChevronDown,
   Clock3,
   Compass,
-  HeartPulse,
+  House,
   Mail,
   MapPin,
   Menu,
   MessageCircle,
   Phone,
-  Plus,
   ShieldCheck,
   Sparkles,
   Stethoscope,
@@ -36,7 +36,7 @@ import { AppointmentModal as BookingModal } from '@/components/appointment-modal
 import { clinicCopy, copy, type ClinicId, type Language } from '@/lib/i18n';
 
 const appointmentSchema = z.object({
-  clinicLocation: z.enum(['multan', 'layyah', 'dg-khan'], {
+  clinicLocation: z.enum(['layyah'], {
     required_error: 'Please choose a clinic location.',
   }),
   city: z.string().min(2, 'Please enter your city.'),
@@ -55,7 +55,7 @@ const appointmentSchema = z.object({
 type AppointmentFormValues = z.infer<typeof appointmentSchema>;
 
 const fallbackAppointmentTypes = [
-  { value: 'new-patient', label: 'New patient', description: 'Your first consultation with Dr. Kharal.' },
+  { value: 'new-patient', label: 'New patient', description: 'Your first consultation with Dr. Sajid Sohail.' },
   { value: 'follow-up', label: 'Follow-up patient', description: 'A review after a previous consultation or procedure.' },
   { value: 'emergency-consultation', label: 'Emergency consultation', description: 'For urgent concerns; call the emergency number for immediate help.' },
 ];
@@ -67,37 +67,20 @@ const fallbackVisitTypes = fallbackAppointmentTypes.map((type) => ({
 
 const fallbackClinics = [
   {
-    id: 'multan',
-    name: 'Neuro Tower Multan',
-    city: 'Multan',
-    address: 'Ahmad Clinics, Al-Kareem Center, Nishtar Road, Multan',
-    mapsUrl: 'https://maps.google.com/maps?hl=en&gl=pk&um=1&ie=UTF-8&fb=1&entry=s&sa=X&ftid=0x393b33635472cbbf:0xb310c5afb8c46340',
-    schedule: [
-      { days: 'Monday, Wednesday, Thursday & Friday', hours: '5:00 PM – 7:00 PM', note: 'Clinic' },
-      { days: 'Saturday', hours: '2:00 PM – 3:00 PM', note: 'Clinic' },
-      { days: 'Friday', hours: '7:00 PM – 8:00 PM', note: 'Online consultation' },
-    ],
-    slots: ['5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM', '6:00 PM', '6:15 PM', '6:30 PM', '6:45 PM'],
-  },
-  {
-    id: 'dg-khan',
-    name: 'Khadija Hospital, Dera Ghazi Khan',
-    city: 'DG Khan',
-    address: 'Bank Islami wali gali, near KFC Hotel, opposite DHQ Hospital, Dera Ghazi Khan',
-    mapsUrl: 'https://maps.app.goo.gl/THSNESnMQAEt2qpa6?g_st=awb',
-    schedule: [{ days: 'First & third Tuesday of every month', hours: '2:00 PM – 6:00 PM', note: 'Clinic' }],
-    slots: ['2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM'],
-  },
-  {
     id: 'layyah',
-    name: 'Kharl Medical Complex, Layyah',
+    name: 'Rahmania Medical Center, Layyah',
     city: 'Layyah',
-    address: 'Clinic of Dr Sajjad Kharl, opposite DHQ Hospital, Layyah',
-    mapsUrl: 'https://maps.google.com/?q=Kharl+Medical+Complex+Layyah',
-    schedule: [{ days: 'Second & fourth Sunday of every month', hours: '9:00 AM – 6:00 PM', note: 'Endoscopic brain & spine clinic' }],
-    slots: ['9:00 AM', '9:15 AM', '9:30 AM', '9:45 AM', '10:00 AM', '10:15 AM', '10:30 AM', '10:45 AM', '11:00 AM', '11:15 AM', '11:30 AM', '11:45 AM', '12:00 PM', '12:15 PM', '12:30 PM', '12:45 PM', '1:00 PM', '1:15 PM', '1:30 PM', '1:45 PM', '2:00 PM', '2:15 PM', '2:30 PM', '2:45 PM', '3:00 PM', '3:15 PM', '3:30 PM', '3:45 PM', '4:00 PM', '4:15 PM', '4:30 PM', '4:45 PM', '5:00 PM', '5:15 PM', '5:30 PM', '5:45 PM'],
+    address: 'Employees Colony, Layyah',
+    mapsUrl: 'https://www.google.com/maps/dir/?api=1&destination=30.9723221%2C70.9651555',
+    schedule: [{ days: 'Daily', hours: '4:00 PM – 8:00 PM', note: 'Endoscopic brain & spine clinic' }],
+    slots: Array.from({ length: 17 }, (_, index) => {
+      const hour = 16 + Math.floor(index / 4);
+      const minute = (index % 4) * 15;
+      return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} PM`;
+    }),
   },
 ];
+const clinicDirectionsUrl = 'https://www.google.com/maps/dir/?api=1&destination=30.9723221%2C70.9651555';
 
 type ClinicSchedule = { days: string; hours: string; note: string | null };
 type Clinic = {
@@ -120,13 +103,13 @@ type AppointmentAvailability = {
 
 const reviews = {
   en: [
-    { quote: 'Dr. Kharal explained my condition in a way our whole family could understand. The calmness in the room changed everything.', name: 'Ayesha M.', context: 'Patient family · Multan' },
-    { quote: 'I came in frightened about my back pain and left with a clear plan. I never felt rushed or talked over.', name: 'Muhammad R.', context: 'Spine consultation · Multan' },
+    { quote: 'Dr. Sajid Sohail explained my condition in a way our whole family could understand. The calmness in the room changed everything.', name: 'Ayesha M.', context: 'Patient family · Layyah' },
+    { quote: 'I came in frightened about my back pain and left with a clear plan. I never felt rushed or talked over.', name: 'Muhammad R.', context: 'Spine consultation · Layyah' },
     { quote: 'The follow-up was just as thoughtful as the first appointment. It felt like care, not a transaction.', name: 'Sana A.', context: 'Follow-up patient · South Punjab' },
   ],
   ur: [
-    { quote: 'ڈاکٹر کھرل نے ہماری پوری فیملی کو میری بیماری اس طرح سمجھائی کہ سب آسانی سے سمجھ گئے۔ ان کے اطمینان نے سب کچھ بدل دیا۔', name: 'عائشہ م.', context: 'مریض کے خاندان سے · ملتان' },
-    { quote: 'کمر کے درد کی وجہ سے خوف زدہ آیا تھا، مگر واضح منصوبے کے ساتھ واپس گیا۔ مجھے جلدی میں محسوس نہیں کرایا گیا۔', name: 'محمد ر.', context: 'ریڑھ کی ہڈی کا مشورہ · ملتان' },
+    { quote: 'ڈاکٹر ساجد سہیل نے ہماری پوری فیملی کو میری بیماری اس طرح سمجھائی کہ سب آسانی سے سمجھ گئے۔ ان کے اطمینان نے سب کچھ بدل دیا۔', name: 'عائشہ م.', context: 'مریض کے خاندان سے · لیہ' },
+    { quote: 'کمر کے درد کی وجہ سے خوف زدہ آیا تھا، مگر واضح منصوبے کے ساتھ واپس گیا۔ مجھے جلدی میں محسوس نہیں کرایا گیا۔', name: 'محمد ر.', context: 'ریڑھ کی ہڈی کا مشورہ · لیہ' },
     { quote: 'فالو اَپ بھی پہلے مشورے جتنا ہی توجہ سے کیا گیا۔ یہ علاج محسوس ہوا، کوئی رسمی کارروائی نہیں۔', name: 'ثناء ا.', context: 'فالو اَپ مریض · جنوبی پنجاب' },
   ],
 } as const;
@@ -144,14 +127,14 @@ function BrandMark({ inverse = false }: { inverse?: boolean }) {
           inverse ? 'bg-[#f2c55f] text-[#153247]' : 'bg-[#153247] text-[#f2c55f]'
         }`}
       >
-        <span className="text-lg font-extrabold leading-none">IK</span>
+        <span className="text-lg font-extrabold leading-none">SS</span>
       </span>
       <span className="leading-tight">
-        <span className={`block text-[13px] font-extrabold tracking-[.15em] ${inverse ? 'text-[#fbf8f0]' : 'text-[#153247]'}`}>
-          NEURO TOWER
+        <span className={`block text-[9px] font-extrabold tracking-[.08em] sm:text-[13px] sm:tracking-[.15em] ${inverse ? 'text-[#fbf8f0]' : 'text-[#153247]'}`}>
+          RAHMANIA MEDICAL CENTER
         </span>
         <span className={`block text-[10px] tracking-[.18em] ${inverse ? 'text-[#bfd1d6]' : 'text-[#6b7b80]'}`}>
-          MULTAN
+          LAYYAH
         </span>
       </span>
     </span>
@@ -212,8 +195,8 @@ function LegacyAppointmentModal({
 
   const onSubmit = (values: any) => {
     const payload: AppointmentInput = {
-      clinicLocation: 'multan',
-      city: 'Multan',
+      clinicLocation: 'layyah',
+      city: 'Layyah',
       patientName: values.patientName,
       phone: values.phone,
       email: values.email || null,
@@ -268,14 +251,14 @@ function LegacyAppointmentModal({
             <p className="mono-face mt-6 text-[10px] font-bold uppercase tracking-[.2em] text-[#a17525]">Request received</p>
             <h3 className="display-face mt-2 text-4xl font-semibold text-[#153247]">You are in good hands.</h3>
             <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#587078]">
-              Dr. Kharal&apos;s team will review your preferred time and call you at the number you provided to confirm the visit.
+              Dr. Sajid Sohail&apos;s team will review your preferred time and call you at the number you provided to confirm the visit.
             </p>
             <div className="mx-auto mt-8 max-w-sm rounded-2xl border border-[#d4e3dd] bg-[#edf6f2] p-4 text-left">
               <p className="text-xs font-bold uppercase tracking-[.15em] text-[#197263]">What happens next</p>
               <p className="mt-2 text-sm leading-6 text-[#315b61]">Keep your phone nearby. Our coordinator will typically respond during clinic hours.</p>
             </div>
             <button onClick={onClose} className="focus-ring mt-8 rounded-full bg-[#153247] px-6 py-3 text-sm font-bold text-[#fbf8f0] transition hover:-translate-y-0.5 hover:bg-[#214c64]" data-testid="button-finish-appointment">
-              Return to Dr. Kharal&apos;s page
+              Return to Dr. Sajid Sohail&apos;s page
             </button>
           </div>
         ) : (
@@ -330,7 +313,7 @@ function LegacyAppointmentModal({
                 </label>
               </div>
               <label className="block text-sm font-semibold text-[#31505b]" data-testid="label-patient-message">
-                Anything you want Dr. Kharal to know? <span className="font-normal text-[#91a0a2]">optional</span>
+                Anything you want Dr. Sajid Sohail to know? <span className="font-normal text-[#91a0a2]">optional</span>
                 <textarea {...form.register('message')} rows={3} className="focus-ring mt-2 w-full resize-none rounded-xl border border-[#cbd9d6] bg-[#fffdf8] px-3.5 py-3 text-sm font-normal text-[#153247] outline-none transition placeholder:text-[#91a0a2] focus:border-[#197263]" placeholder="A short note about your symptoms or previous reports" data-testid="textarea-patient-message" />
                 <FieldError message={form.formState.errors.message?.message} />
               </label>
@@ -367,8 +350,9 @@ function Home() {
   });
   const availability = availabilityQuery.data;
   const requestsInReview = appointmentsQuery.data?.length ?? 0;
-  const clinics = availability?.clinics?.length ? availability.clinics : fallbackClinics;
-  const clinicPhone = availability?.phone || '03377628073';
+  const availableClinics = availability?.clinics?.filter((clinic) => clinic.id === 'layyah') ?? [];
+  const clinics = availableClinics.length ? availableClinics : fallbackClinics;
+  const clinicPhone = '0300 5809938';
   const localizedReviews = reviews[language];
 
   useEffect(() => {
@@ -383,36 +367,48 @@ function Home() {
   };
 
   return (
-    <main className={`grain min-h-[100dvh] overflow-hidden bg-[#f8f6ef] text-[#153247] ${language === 'ur' ? 'urdu-copy' : ''}`}>
-      <header className="relative z-20 border-b border-[#dce3df] bg-[#f8f6ef]/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 lg:px-10">
-          <a href="#top" className="focus-ring rounded-lg" data-testid="link-brand-home"><BrandMark /></a>
+    <main className={`doctor-now-layout grain min-h-[100dvh] overflow-hidden bg-white pb-16 text-[#153247] md:pb-0 ${language === 'ur' ? 'urdu-copy' : ''}`}>
+      <div className="border-b border-[#e5e9f2] bg-[#f0f1f4]">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2 text-[11px] font-semibold text-[#526479] lg:px-10">
+          <span>Rahmania Medical Center · Layyah</span>
+          <span className="hidden sm:inline">Daily appointments · 4:00 PM – 8:00 PM</span>
+          <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-[#158b8b] hover:text-[#116e70]">{clinicPhone}</a>
+        </div>
+      </div>
+      <header className="doctor-now-header sticky top-0 z-20 border-b border-[#e5e9f2] bg-white/95 backdrop-blur-md">
+        <div className="relative mx-auto flex min-h-14 max-w-7xl items-center justify-between px-5 py-4 lg:px-10">
+          <button onClick={() => setMobileOpen((current) => !current)} className="focus-ring absolute left-5 top-1/2 -translate-y-1/2 rounded-lg p-2 text-[#173b60] md:hidden" aria-label={text.nav.menu} data-testid="button-mobile-menu">
+            {mobileOpen ? <X className="size-6" /> : <Menu className="size-6" />}
+          </button>
+          <a href="#top" className="focus-ring absolute left-1/2 -translate-x-1/2 rounded-lg md:static md:translate-x-0" data-testid="link-brand-home"><BrandMark /></a>
           <nav className="hidden items-center gap-7 md:flex" aria-label="Primary navigation">
             <a href="#approach" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-approach">{text.nav.approach}</a>
+            <a href="#how-it-works" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-how-it-works">{text.nav.howItWorks}</a>
             <a href="#care" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-care">{text.nav.care}</a>
             <a href="#clinic" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-clinic">{text.nav.clinic}</a>
             <a href="#voices" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-reviews">{text.nav.reviews}</a>
+            <a href="#faq" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-faq">{text.nav.faq}</a>
           </nav>
           <div className="hidden items-center gap-5 md:flex">
             <button onClick={() => setLanguage((current) => current === 'en' ? 'ur' : 'en')} className="focus-ring rounded-full border border-[#b8cbc6] px-3 py-2 text-xs font-bold text-[#31505b] transition hover:border-[#197263] hover:text-[#197263]" aria-label={`Switch to ${text.switchLanguage}`} data-testid="button-language-toggle">{text.switchLanguage}</button>
-            <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="focus-ring flex items-center gap-2 text-sm font-bold text-[#197263]" data-testid="link-header-phone"><Phone className="size-4" /> {text.nav.call}</a>
+            <a href={`tel:${clinicPhone.replace(/[^\d+]/g, '')}`} className="focus-ring flex items-center gap-2 text-sm font-bold text-[#197263]" data-testid="link-header-phone"><Phone className="size-4" /> {text.nav.call}</a>
             <button onClick={openAppointment} className="focus-ring rounded-full bg-[#153247] px-5 py-2.5 text-sm font-bold text-[#fbf8f0] transition hover:-translate-y-0.5 hover:bg-[#214c64]" data-testid="button-header-appointment">{text.nav.visit}</button>
           </div>
-          <div className="flex items-center gap-2 md:hidden">
-            <button onClick={() => setLanguage((current) => current === 'en' ? 'ur' : 'en')} className="focus-ring rounded-full border border-[#b8cbc6] px-3 py-2 text-xs font-bold text-[#31505b]" aria-label={`Switch to ${text.switchLanguage}`} data-testid="button-language-toggle-mobile">{text.switchLanguage}</button>
-            <button onClick={() => setMobileOpen((current) => !current)} className="focus-ring rounded-lg p-2 text-[#153247]" aria-label={text.nav.menu} data-testid="button-mobile-menu">
-              {mobileOpen ? <X className="size-6" /> : <Menu className="size-6" />}
-            </button>
+          <div className="absolute right-5 top-1/2 flex -translate-y-1/2 items-center gap-2 md:static md:translate-y-0">
+            <button onClick={openAppointment} className="focus-ring rounded-full bg-[#173b60] px-3 py-2 text-[10px] font-bold text-white md:hidden" data-testid="button-mobile-header-appointment">{text.nav.book}</button>
           </div>
         </div>
         {mobileOpen && (
           <div className="border-t border-[#dce3df] px-5 py-4 md:hidden">
+            <button onClick={() => setLanguage((current) => current === 'en' ? 'ur' : 'en')} className="mb-2 rounded-xl px-3 py-3 text-sm font-bold text-[#148b8b]" aria-label={`Switch to ${text.switchLanguage}`} data-testid="button-language-toggle-mobile">{text.switchLanguage}</button>
             <nav className="grid gap-1" aria-label="Mobile navigation">
               {[
                 [text.nav.approach, '#approach'],
+                [text.nav.howItWorks, '#how-it-works'],
                 [text.nav.care, '#care'],
                 [text.nav.clinic, '#clinic'],
                 [text.nav.reviews, '#voices'],
+                [text.nav.faq, '#faq'],
               ].map(([label, href]) => (
                 <a key={href} href={href} onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-semibold text-[#31505b] hover:bg-[#eaf0ed]" data-testid={`link-mobile-${label.toLowerCase().replaceAll(' ', '-')}`}>{label}</a>
               ))}
@@ -422,95 +418,135 @@ function Home() {
         )}
       </header>
 
-      <section id="top" className="hero-grid relative border-b border-[#dce3df]">
-        <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 pb-16 pt-14 lg:grid-cols-[1.02fr_.98fr] lg:px-10 lg:pb-24 lg:pt-20">
-          <div className="relative z-10 animate-soft-rise">
+      <section id="top" className="doctor-now-hero relative border-b border-[#e0e5f0] bg-[#eef1fb]">
+        <div className="mx-auto grid min-h-[520px] max-w-7xl items-center gap-8 px-5 py-10 lg:grid-cols-2 lg:gap-16 lg:px-10 lg:py-12">
+          <div className="relative z-10 order-1 animate-soft-rise lg:order-2">
             <div className="mb-7 inline-flex items-center gap-2 rounded-full border border-[#cfe0d9] bg-[#f6faf5] px-3 py-1.5 text-xs font-bold text-[#197263]" data-testid="status-clinic-open">
               <span className="size-1.5 rounded-full bg-[#2a9b79]" /> {text.hero.accepting}
             </div>
-            <p className="mono-face text-[11px] font-bold uppercase tracking-[.23em] text-[#a17525]">{text.hero.eyebrow}</p>
-            <h1 className="display-face mt-5 max-w-2xl text-[clamp(3.4rem,7vw,6.8rem)] font-semibold leading-[.91] text-[#153247]">
+            <p className="mono-face text-[11px] font-bold uppercase tracking-[.23em] text-[#148b8b]">{text.hero.eyebrow}</p>
+            <h1 className="display-face mt-5 max-w-2xl text-[clamp(3.1rem,6vw,5rem)] font-semibold leading-[.99] text-[#173b60]">
               {text.hero.title} <span className="text-[#197263]">{text.hero.titleAccent}</span>
             </h1>
             <p className="mt-7 max-w-xl text-base leading-7 text-[#587078] sm:text-lg">
               {text.hero.intro}
             </p>
-            <div className="mt-9 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <button onClick={openAppointment} className="focus-ring group inline-flex items-center gap-3 rounded-full bg-[#f2c55f] px-6 py-3.5 text-sm font-extrabold text-[#153247] transition hover:-translate-y-1 hover:bg-[#f6d27e]" data-testid="button-hero-appointment">
-                {text.hero.request} <span className="grid size-6 place-items-center rounded-full bg-[#153247] text-[#f2c55f] transition group-hover:rotate-45"><ArrowUpRight className="size-3.5" /></span>
+            <div className="mt-8 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+              <button onClick={openAppointment} className="focus-ring group inline-flex min-w-56 items-center justify-center gap-3 rounded-full bg-[#173b60] px-7 py-4 text-sm font-extrabold uppercase tracking-wide text-white shadow-[0_12px_30px_-15px_rgba(23,59,96,.75)] transition hover:-translate-y-1 hover:bg-[#214d70]" data-testid="button-hero-appointment">
+                {text.hero.request} <span className="grid size-6 place-items-center rounded-full bg-white/15 text-white transition group-hover:rotate-45"><ArrowUpRight className="size-3.5" /></span>
               </button>
               <a href="#approach" className="focus-ring inline-flex items-center gap-2 rounded-full px-3 py-3 text-sm font-bold text-[#31505b] transition hover:text-[#197263]" data-testid="link-hero-approach">{text.hero.approach} <ArrowUpRight className="size-4" /></a>
             </div>
-            <div className="mt-12 flex items-center gap-8 border-t border-[#cddbd8] pt-6">
-              <div><p className="display-face text-3xl font-semibold text-[#153247]">18<span className="text-[#197263]">+</span></p><p className="mt-1 text-xs font-semibold uppercase tracking-[.1em] text-[#718287]">{text.hero.years}</p></div>
-              <div className="h-10 w-px bg-[#cddbd8]" />
-              <div><p className="display-face text-3xl font-semibold text-[#153247]">Brain<span className="text-[#197263]"> + </span>Spine</p><p className="mt-1 text-xs font-semibold uppercase tracking-[.1em] text-[#718287]">{text.hero.expertise}</p></div>
-            </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[560px] animate-soft-rise [animation-delay:140ms]">
-            <div className="absolute -right-6 -top-8 size-36 rounded-full border border-[#e2be5e]/60 [animation:pulse-ring_4s_ease-in-out_infinite]" />
-            <div className="relative overflow-hidden rounded-[32px] bg-[#153247] px-6 pb-6 pt-7 shadow-[0_30px_80px_-32px_rgba(21,50,71,.75)] sm:px-9 sm:pt-9">
-              <div className="absolute right-0 top-0 h-full w-2/3 bg-[radial-gradient(circle_at_70%_20%,rgba(55,131,119,.5),transparent_52%)]" />
-              <div className="relative flex items-start justify-between">
-                <div>
-                   <p className="mono-face text-[10px] font-bold uppercase tracking-[.2em] text-[#f2c55f]">{text.hero.consultant}</p>
-                  <h2 className="display-face mt-3 text-4xl font-semibold leading-none text-[#fbf8f0] sm:text-5xl">Dr. Iqbal<br />Kharal</h2>
-                   <p className="mt-4 max-w-[190px] text-sm leading-5 text-[#b7cbd0]">{text.hero.steady}</p>
-                </div>
-                <div className="rounded-full border border-[#bcd4d0]/30 px-3 py-1.5 text-[10px] font-bold text-[#bcd4d0]">MBBS · FCPS</div>
-              </div>
-              <div className="relative mt-9 flex h-[260px] items-end justify-center overflow-hidden rounded-[24px] bg-[#214b61] sm:h-[310px]">
-                <div className="absolute inset-0 opacity-30 hero-grid" />
-                <div className="absolute left-5 top-5 text-[#9ed1c6]"><Plus className="size-5" /></div>
-                <div className="absolute right-6 top-10 text-[#f2c55f]"><Plus className="size-4" /></div>
-                <svg viewBox="0 0 320 260" className="relative h-full w-full" aria-label="Abstract brain and spine illustration" role="img">
-                  <path d="M171 50c-35-27-91-3-94 45-2 28 13 47 29 58 8 6 11 17 10 30l-1 25h66l-1-25c-1-13 2-23 10-30 18-15 30-34 27-59-3-26-20-40-46-44Z" fill="#7fb9af" opacity=".92" />
-                  <path d="M163 54c-17 6-26 22-24 37 2 12-8 18-17 25-10 7-14 17-11 29M171 52c16 7 24 22 21 36-2 13 8 20 17 27 9 7 13 18 10 30M142 74c11 9 14 18 11 30M188 72c-11 10-13 20-10 30" fill="none" stroke="#d6efe8" strokeLinecap="round" strokeWidth="4" opacity=".7" />
-                  <path d="M116 197c18 4 40 4 61 0l-2 28c-2 17-10 24-28 24s-26-7-28-24Z" fill="#f2c55f" opacity=".95" />
-                  <path d="M148 201v43M136 203v35M160 203v35M128 201c-6 7-7 14-4 22M168 201c6 7 7 14 4 22" fill="none" stroke="#153247" strokeLinecap="round" strokeWidth="3" opacity=".55" />
-                  <circle cx="78" cy="107" r="5" fill="#f2c55f" /><circle cx="242" cy="132" r="5" fill="#9ed1c6" />
-                  <path d="M82 107h30M238 132h-28" stroke="#d6efe8" strokeDasharray="3 5" opacity=".65" />
-                </svg>
-                <div className="absolute bottom-4 left-4 flex items-center gap-2 rounded-full bg-[#153247]/70 px-3 py-2 text-[10px] font-bold text-[#d6efe8] backdrop-blur">
-                   <HeartPulse className="size-3.5 text-[#f2c55f]" /> {text.hero.wholePerson}
-                </div>
-              </div>
-              <div className="relative mt-5 flex items-center justify-between text-xs">
-                 <span className="text-[#9ab5ba]">Neuro Tower Multan</span>
-                 <span className="flex items-center gap-1.5 font-bold text-[#f2c55f]"><MapPin className="size-3.5" /> {text.hero.bosan}</span>
-              </div>
+          <div className="relative order-2 mx-auto w-full max-w-[560px] animate-soft-rise lg:order-1 [animation-delay:140ms]">
+            <img
+              src="/dr-sajid-sohail.jpg"
+              alt="Dr. Sajid Sohail"
+              className="aspect-square w-full max-w-[440px] rounded-[30%_8%_30%_8%] border border-white/80 bg-[#dfe9f6] object-cover shadow-[0_24px_70px_-40px_rgba(23,59,96,.4)]"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-[#e6e9ef] bg-white">
+        <div className="mx-auto grid max-w-7xl grid-cols-3 gap-3 px-5 py-7 sm:gap-6 lg:px-10">
+          {text.impact.metrics.map(([value, label]) => (
+            <div key={label} className="text-center">
+              <p className="display-face text-2xl font-semibold text-[#173b60] sm:text-3xl">{value}</p>
+              <p className="mt-1 text-[10px] font-semibold text-[#748397] sm:text-sm">{label}</p>
             </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-b border-[#e6e9ef] bg-white">
+        <div className="mx-auto max-w-7xl px-5 py-14 lg:px-10 lg:py-16">
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#148b8b]">{text.help.eyebrow}</p>
+              <h2 className="display-face mt-3 text-3xl font-semibold text-[#173b60] sm:text-4xl">{text.help.title}</h2>
+            </div>
+            <div className="hidden gap-3 text-2xl text-[#173b60] sm:flex" aria-hidden="true"><span>‹</span><span>›</span></div>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            {text.help.cards.map((label, index) => (
+              <a key={label} href="#care" className="group text-center" data-testid={`link-quick-care-${index}`}>
+              <img
+                src={['/brain-care.svg', '/spine-care.svg', '/medical-opinion.svg'][index]}
+                alt={['Illustration of brain care', 'Illustration of spine care', 'Illustration of a medical second opinion'][index]}
+                loading="lazy"
+                className="aspect-[1.35] w-full rounded-2xl object-cover transition group-hover:brightness-[.98]"
+              />
+              <span className="mt-4 block text-base font-semibold text-[#173b60]">{label}</span>
+            </a>
+            ))}
           </div>
         </div>
       </section>
 
       <section id="approach" className="mx-auto max-w-7xl scroll-mt-20 px-5 py-20 lg:px-10 lg:py-28">
-        <div className="grid gap-12 lg:grid-cols-[.8fr_1.2fr] lg:gap-24">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-20">
+          <img
+            src="/doctor-consultation.svg"
+            alt="Illustration of a doctor consulting with a patient"
+            loading="lazy"
+            className="aspect-[1.35] w-full rounded-[30px] object-cover"
+          />
           <div>
-            <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#a17525]">{text.approach.eyebrow}</p>
-            <h2 className="display-face mt-5 max-w-md text-4xl font-semibold leading-[1.04] text-[#153247] sm:text-5xl">{text.approach.title}</h2>
-          </div>
-          <div>
-            <p className="max-w-2xl text-xl leading-8 text-[#31505b]">{text.approach.intro}</p>
-            <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#148b8b]">{text.approach.eyebrow}</p>
+            <h2 className="display-face mt-4 max-w-md text-4xl font-semibold leading-[1.04] text-[#173b60] sm:text-5xl">{text.approach.title}</h2>
+            <p className="mt-5 max-w-2xl text-base leading-7 text-[#687d91]">{text.approach.intro}</p>
+            <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
                 { icon: MessageCircle, title: text.approach.cards[0][0], text: text.approach.cards[0][1] },
                 { icon: Brain, title: text.approach.cards[1][0], text: text.approach.cards[1][1] },
                 { icon: ShieldCheck, title: text.approach.cards[2][0], text: text.approach.cards[2][1] },
               ].map(({ icon: Icon, title, text }, index) => (
-                <div key={title} className="border-t border-[#b8cbc6] pt-5" data-testid={`card-approach-${index}`}>
-                  <Icon className="size-5 text-[#197263]" />
-                  <h3 className="mt-5 text-base font-bold text-[#153247]">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[#718287]">{text}</p>
+                <div key={title} className="border-t border-[#dce3ed] pt-4" data-testid={`card-approach-${index}`}>
+                  <Icon className="size-5 text-[#148b8b]" />
+                  <h3 className="mt-3 text-sm font-bold text-[#173b60]">{title}</h3>
+                  <p className="mt-2 text-xs leading-5 text-[#748397]">{text}</p>
                 </div>
               ))}
             </div>
+            <button onClick={openAppointment} className="focus-ring mt-7 inline-flex items-center gap-3 rounded-full bg-[#173b60] px-7 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#214d70]" data-testid="button-approach-appointment">
+              {text.hero.request}<ArrowUpRight className="size-4" />
+            </button>
           </div>
         </div>
       </section>
 
-      <section id="care" className="scroll-mt-20 bg-[#e7f0ec]">
+      <section id="how-it-works" className="scroll-mt-20 bg-[#f7f8fc]">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 py-16 lg:grid-cols-[.9fr_1.1fr] lg:px-10 lg:py-24">
+          <img
+            src="/appointment-calendar.svg"
+            alt="Illustration of a clinic appointment calendar"
+            loading="lazy"
+            className="mx-auto aspect-[.68] w-full max-w-[300px] object-contain"
+          />
+          <div>
+            <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#148b8b]">{text.steps.eyebrow}</p>
+            <h2 className="display-face mt-4 max-w-xl text-4xl font-semibold leading-tight text-[#173b60] sm:text-5xl">{text.steps.title}</h2>
+            <p className="mt-5 max-w-xl text-base leading-7 text-[#687d91]">{text.steps.intro}</p>
+            <div className="mt-8 grid gap-5">
+              {text.steps.cards.map(([title, description], index) => {
+                return (
+                  <div key={title} className="flex gap-4 border-b border-[#e2e7ef] py-4" data-testid={`card-booking-step-${index + 1}`}>
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-[#eef1fb] text-sm font-bold text-[#173b60]">{index + 1}</span>
+                    <div><p className="text-sm font-bold text-[#173b60]">{title}</p><p className="mt-1 text-sm leading-6 text-[#748397]">{description}</p></div>
+                  </div>
+                );
+              })}
+            </div>
+            <button onClick={openAppointment} className="focus-ring mt-7 inline-flex items-center gap-3 rounded-full bg-[#173b60] px-6 py-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#214d70]" data-testid="button-how-it-works-appointment">
+              {text.steps.cta}<ArrowUpRight className="size-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="care" className="scroll-mt-20 bg-white">
         <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10 lg:py-28">
           <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-end">
             <div>
@@ -551,7 +587,7 @@ function Home() {
         </div>
       </section>
 
-      <section id="clinic" className="scroll-mt-20 border-b border-[#dce3df] bg-[#f8f6ef]">
+      <section id="clinic" className="scroll-mt-20 border-b border-[#e6e9ef] bg-[#f7f8fc]">
         <div className="mx-auto grid max-w-7xl gap-12 px-5 py-20 lg:grid-cols-[.8fr_1.2fr] lg:px-10 lg:py-28">
           <div>
              <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#a17525]">{text.clinic.eyebrow}</p>
@@ -561,19 +597,23 @@ function Home() {
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
              {clinics.map((clinic) => {
-               const details = clinicCopy[language][clinic.id as ClinicId];
+               const details = clinicCopy[language][clinic.id as ClinicId] ?? {
+                 city: clinic.city,
+                 address: clinic.address,
+                 schedule: clinic.schedule,
+               };
                return (
               <div key={clinic.id} className="rounded-[24px] bg-[#e7f0ec] p-7 sm:col-span-2 sm:flex sm:items-start sm:justify-between" data-testid={`card-clinic-location-${clinic.id}`}>
                 <div className="flex items-start gap-4">
                   <div className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#153247] text-[#f2c55f]"><MapPin className="size-5" /></div>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-[.13em] text-[#197263]">{details.city} {text.clinic.clinic}</p>
-                    <p className="mt-2 text-lg font-bold text-[#153247]">{clinic.name}</p>
+                    <p className="mt-2 text-lg font-bold text-[#153247]">Rahmania Medical Center, Layyah</p>
                     <p className="mt-1 max-w-xl text-sm leading-6 text-[#587078]">{details.address}</p>
                     <div className="mt-4 grid gap-1.5 text-xs text-[#315b61]">{details.schedule.map((item) => <p key={`${clinic.id}-${item.days}`}><span className="font-bold">{item.days}:</span> {item.hours}{item.note ? ` · ${item.note}` : ''}</p>)}</div>
                   </div>
                 </div>
-                <a href={clinic.mapsUrl} target="_blank" rel="noreferrer" className="focus-ring mt-5 inline-flex shrink-0 items-center gap-2 text-sm font-bold text-[#197263] sm:mt-1" data-testid={`link-clinic-directions-${clinic.id}`}>{text.clinic.directions} <ArrowUpRight className="size-4" /></a>
+                <a href={clinicDirectionsUrl} target="_blank" rel="noreferrer" className="focus-ring mt-5 inline-flex shrink-0 items-center gap-2 text-sm font-bold text-[#197263] sm:mt-1" data-testid={`link-clinic-directions-${clinic.id}`}>{text.clinic.directions} <ArrowUpRight className="size-4" /></a>
               </div>
                );
              })}
@@ -592,7 +632,7 @@ function Home() {
         </div>
       </section>
 
-      <section id="voices" className="scroll-mt-20 bg-[#f1ead8]">
+      <section id="voices" className="scroll-mt-20 bg-[#f7f8fc]">
         <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10 lg:py-28">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
              <div><p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#a17525]">{text.reviews.eyebrow}</p><h2 className="display-face mt-4 text-4xl font-semibold text-[#153247] sm:text-5xl">{text.reviews.title}</h2></div>
@@ -604,6 +644,25 @@ function Home() {
                 <div><div className="flex gap-1 text-[#d09b29]" aria-label="5 out of 5 stars">{[0, 1, 2, 3, 4].map((star) => <Sparkles key={star} className="size-3.5 fill-current" />)}</div><blockquote className="mt-6 text-lg font-medium leading-7 text-[#31505b]">“{review.quote}”</blockquote></div>
                 <figcaption className="mt-7 border-t border-[#e6dbc3] pt-4"><p className="text-sm font-bold text-[#153247]">{review.name}</p><p className="mt-1 text-xs text-[#8b7d61]">{review.context}</p></figcaption>
               </figure>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="scroll-mt-20 bg-[#fbf8f0]">
+        <div className="mx-auto max-w-4xl px-5 py-16 lg:px-10 lg:py-24">
+          <div className="mb-8 text-center">
+            <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#a17525]">{text.faq.eyebrow}</p>
+            <h2 className="display-face mt-4 text-4xl font-semibold text-[#153247] sm:text-5xl">{text.faq.title}</h2>
+          </div>
+          <div className="divide-y divide-[#dce3df] border-y border-[#dce3df]">
+            {text.faq.items.map(([question, answer], index) => (
+              <details key={question} className="group py-5" data-testid={`faq-item-${index}`}>
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-left text-sm font-bold text-[#153247] marker:hidden sm:text-base">
+                  {question}<ChevronDown className="size-4 shrink-0 text-[#197263] transition group-open:rotate-180" />
+                </summary>
+                <p className="mt-3 max-w-3xl pr-8 text-sm leading-6 text-[#718287]">{answer}</p>
+              </details>
             ))}
           </div>
         </div>
@@ -622,8 +681,16 @@ function Home() {
            <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.contact}</p><a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-phone">{clinicPhone}</a><a href="mailto:care@neurotower.pk" className="focus-ring mt-2 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-email"><Mail className="mr-1.5 inline size-3.5" />care@neurotower.pk</a></div>
            <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.navigate}</p><a href="#top" className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-top">{text.footer.top}</a><p className="mt-2 text-sm text-[#88a5ab]" data-testid="text-review-queue">{appointmentsQuery.isError ? text.footer.helping : requestsInReview > 0 ? text.footer.request : text.footer.requests}</p></div>
         </div>
-         <div className="border-t border-[#274658]"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[#6f9198] sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>© {new Date().getFullYear()} Dr. Iqbal Kharal · Neuro Tower Multan</span><span>{text.footer.urgent}</span></div></div>
+         <div className="border-t border-[#274658]"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[#6f9198] sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>© {new Date().getFullYear()} Dr. Sajid Sohail · Rahmania Medical Center, Layyah</span><span>{text.footer.urgent}</span></div></div>
       </footer>
+
+      <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-[#e2e7ef] bg-white/95 px-2 pb-[max(8px,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_-18px_rgba(23,59,96,.45)] backdrop-blur md:hidden" aria-label="Quick navigation">
+        <a href="#top" className="flex flex-col items-center gap-1 py-1 text-[10px] font-semibold text-[#526a7c]"><House className="size-5" />{text.nav.home}</a>
+        <a href="#care" className="flex flex-col items-center gap-1 py-1 text-[10px] font-semibold text-[#526a7c]"><Stethoscope className="size-5" />{text.nav.care}</a>
+        <a href="#clinic" className="flex flex-col items-center gap-1 py-1 text-[10px] font-semibold text-[#526a7c]"><MapPin className="size-5" />{text.nav.clinic}</a>
+        <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="flex flex-col items-center gap-1 py-1 text-[10px] font-semibold text-[#526a7c]"><Phone className="size-5" />{text.nav.call}</a>
+        <button onClick={openAppointment} className="flex flex-col items-center gap-1 py-1 text-[10px] font-bold text-[#148b8b]"><CalendarDays className="size-5" />{text.nav.book}</button>
+      </nav>
 
       <BookingModal open={appointmentOpen} onClose={() => setAppointmentOpen(false)} availability={availability} language={language} />
     </main>
