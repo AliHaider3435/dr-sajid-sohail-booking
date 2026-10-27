@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "preinstall": "node -e \"if (process.env.npm_config_user_agent && !process.env.npm_config_user_agent.startsWith('pnpm/')) { console.error('Use pnpm instead'); process.exit(1); }\"",
-    "build": "pnpm run typecheck && pnpm -C artifacts/web run build && node -e \"require('fs').cpSync('artifacts/web/dist', 'dist', {recursive: true})\"",
+    "build": "pnpm run typecheck && pnpm -C artifacts/web run build && node -e \"const fs=require('fs'); fs.cpSync('artifacts/web/dist', 'dist', {recursive: true}); fs.mkdirSync('dist/admin', {recursive: true}); fs.copyFileSync('dist/index.html', 'dist/admin/index.html'); fs.copyFileSync('dist/index.html', 'dist/admin.html');\"",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -C artifacts/web run typecheck"
   },

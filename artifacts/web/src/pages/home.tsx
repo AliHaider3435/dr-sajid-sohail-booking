@@ -32,6 +32,7 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useLocation } from 'wouter';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form } from '@/components/ui/form';
@@ -352,6 +353,7 @@ function Home() {
     return window.localStorage.getItem('neurotower-language') === 'ur' ? 'ur' : 'en';
   });
   const text = copy[language];
+  const [, setLocation] = useLocation();
   const [timingConfig, setTimingConfig] = useState<ClinicTimingConfig>(getClinicTimingConfig());
   const [patientStories, setPatientStories] = useState<PatientStory[]>(getPatientStories(true));
   const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
@@ -424,10 +426,10 @@ function Home() {
             <button onClick={() => setLanguage((current) => current === 'en' ? 'ur' : 'en')} className="focus-ring rounded-full border border-[#b8cbc6] px-3 py-2 text-xs font-bold text-[#31505b] transition hover:border-[#197263] hover:text-[#197263]" aria-label={`Switch to ${text.switchLanguage}`} data-testid="button-language-toggle">{text.switchLanguage}</button>
             <a href={`tel:${clinicPhone.replace(/[^\d+]/g, '')}`} className="focus-ring flex items-center gap-2 text-sm font-bold text-[#197263]" data-testid="link-header-phone"><Phone className="size-4" /> {text.nav.call}</a>
             <button onClick={openAppointment} className="focus-ring rounded-full bg-[#153247] px-5 py-2.5 text-sm font-bold text-[#fbf8f0] transition hover:-translate-y-0.5 hover:bg-[#214c64]" data-testid="button-header-appointment">{text.nav.visit}</button>
-            <a href="/admin" className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-[#cbd9d6] bg-[#f8fbf9] px-3.5 py-2 text-xs font-bold text-[#197263] shadow-sm transition hover:border-[#197263] hover:bg-[#eaf4f0]" data-testid="button-header-admin"><ShieldCheck className="size-3.5 text-[#197263]" /> Admin Login</a>
+            <button type="button" onClick={() => setLocation('/admin')} className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-[#cbd9d6] bg-[#f8fbf9] px-3.5 py-2 text-xs font-bold text-[#197263] shadow-sm transition hover:border-[#197263] hover:bg-[#eaf4f0]" data-testid="button-header-admin"><ShieldCheck className="size-3.5 text-[#197263]" /> Admin Login</button>
           </div>
           <div className="absolute right-5 top-1/2 flex -translate-y-1/2 items-center gap-2 md:static md:translate-y-0">
-            <a href="/admin" className="focus-ring inline-flex items-center gap-1 rounded-full border border-[#cbd9d6] bg-[#f8fbf9] px-2.5 py-1.5 text-[10px] font-bold text-[#197263] md:hidden" aria-label="Admin Login"><ShieldCheck className="size-3 text-[#197263]" /> Admin</a>
+            <button type="button" onClick={() => setLocation('/admin')} className="focus-ring inline-flex items-center gap-1 rounded-full border border-[#cbd9d6] bg-[#f8fbf9] px-2.5 py-1.5 text-[10px] font-bold text-[#197263] md:hidden" aria-label="Admin Login"><ShieldCheck className="size-3 text-[#197263]" /> Admin</button>
             <button onClick={openAppointment} className="focus-ring rounded-full bg-[#173b60] px-3 py-2 text-[10px] font-bold text-white md:hidden" data-testid="button-mobile-header-appointment">{text.nav.book}</button>
           </div>
         </div>
@@ -445,7 +447,7 @@ function Home() {
               ].map(([label, href]) => (
                 <a key={href} href={href} onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-semibold text-[#31505b] hover:bg-[#eaf0ed]" data-testid={`link-mobile-${label.toLowerCase().replaceAll(' ', '-')}`}>{label}</a>
               ))}
-              <a href="/admin" onClick={() => setMobileOpen(false)} className="mt-2 flex items-center gap-2 rounded-xl border border-[#cbe1d9] bg-[#eef7f4] px-4 py-3 text-sm font-bold text-[#197263]" data-testid="link-mobile-admin"><ShieldCheck className="size-4" /> Admin Portal Login</a>
+              <button type="button" onClick={() => { setMobileOpen(false); setLocation('/admin'); }} className="mt-2 flex w-full items-center gap-2 rounded-xl border border-[#cbe1d9] bg-[#eef7f4] px-4 py-3 text-sm font-bold text-[#197263]" data-testid="link-mobile-admin"><ShieldCheck className="size-4" /> Admin Portal Login</button>
             </nav>
             <button onClick={openAppointment} className="mt-3 w-full rounded-full bg-[#153247] px-5 py-3 text-sm font-bold text-[#fbf8f0]" data-testid="button-mobile-appointment">{text.nav.visit}</button>
           </div>
@@ -812,7 +814,7 @@ function Home() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 lg:grid-cols-[1fr_auto_auto] lg:px-10">
            <div><BrandMark inverse /><p className="mt-5 max-w-xs text-sm leading-6 text-[#88a5ab]">{text.footer.brainSpine}</p></div>
            <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.contact}</p><a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-phone">{clinicPhone}</a><a href="mailto:care@neurotower.pk" className="focus-ring mt-2 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-email"><Mail className="mr-1.5 inline size-3.5" />care@neurotower.pk</a></div>
-           <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.navigate}</p><a href="#top" className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-top">{text.footer.top}</a><p className="mt-2 text-sm text-[#88a5ab]" data-testid="text-review-queue">{appointmentsQuery.isError ? text.footer.helping : requestsInReview > 0 ? text.footer.request : text.footer.requests}</p><a href="/admin" className="focus-ring mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#f2c55f] hover:underline" data-testid="link-admin-login">🔐 Admin Portal Login →</a></div>
+           <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.navigate}</p><a href="#top" className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-top">{text.footer.top}</a><p className="mt-2 text-sm text-[#88a5ab]" data-testid="text-review-queue">{appointmentsQuery.isError ? text.footer.helping : requestsInReview > 0 ? text.footer.request : text.footer.requests}</p><button type="button" onClick={() => setLocation('/admin')} className="focus-ring mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#f2c55f] hover:underline" data-testid="link-admin-login">🔐 Admin Portal Login →</button></div>
         </div>
          <div className="border-t border-[#274658]"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[#6f9198] sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>© {new Date().getFullYear()} Dr. Sajid Sohail · Rahmania Medical Center, Layyah</span><span>{text.footer.urgent}</span></div></div>
       </footer>
