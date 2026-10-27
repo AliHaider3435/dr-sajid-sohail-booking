@@ -29,6 +29,7 @@ import {
   getScheduleForDate,
   formatTime24to12,
   type ClinicTimingConfig,
+  type TimeSlot,
 } from '@/lib/clinic-timing-service';
 import { addStoredAppointment, countAppointmentsForSlot } from '@/lib/appointments-service';
 
@@ -131,7 +132,7 @@ export function AppointmentModal({
   const dateSchedule = getScheduleForDate(selectedDate, timingConfig);
 
   // Dynamic slot generation for the selected date
-  const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+  const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
 
   useEffect(() => {
     const config = getClinicTimingConfig();
@@ -393,39 +394,52 @@ export function AppointmentModal({
                   <div>
                     <div className="flex items-center justify-between">
                       <p className="text-sm font-semibold text-[#31505b]">{text.booking.timeSlot}</p>
-                      <span className="text-xs text-[#718287]">
-                        {availableSlots.length} available slots
+                      <span className="text-xs font-semibold text-[#197263]">
+                        {timingConfig.appointmentsPerHour} appointments per hour
                       </span>
                     </div>
 
-                    <div className="mt-2.5 grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1 sm:grid-cols-4">
+                    <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                       {availableSlots.map((slot) => {
-                        const isSelected = form.watch('preferredTime') === slot;
-                        const bookedCount = countAppointmentsForSlot(selectedDate, slot);
-                        const isFull = bookedCount >= timingConfig.appointmentsPerHour;
+                        const isSelected = form.watch('preferredTime') === slot.label;
+                        const bookedCount = countAppointmentsForSlot(selectedDate, slot.label);
+                        const isFull = bookedCount >= slot.capacity;
+                        const remaining = Math.max(0, slot.capacity - bookedCount);
 
                         return (
                           <button
                             type="button"
-                            key={slot}
+                            key={slot.id}
                             disabled={isFull}
-                            onClick={() => form.setValue('preferredTime', slot, { shouldValidate: true })}
-                            className={`focus-ring rounded-xl border px-3 py-2.5 text-xs font-bold transition flex flex-col items-center justify-center ${
+                            onClick={() => form.setValue('preferredTime', slot.label, { shouldValidate: true })}
+                            className={`focus-ring rounded-2xl border p-3.5 text-left transition flex items-center justify-between ${
                               isFull
                                 ? 'border-[#e0e5e3] bg-[#edf2ef] text-[#93a29f] cursor-not-allowed opacity-60'
                                 : isSelected
-                                ? 'border-[#197263] bg-[#197263] text-white shadow-sm'
+                                ? 'border-[#197263] bg-[#197263] text-white shadow-md'
                                 : 'border-[#cbd9d6] bg-[#fffdf8] text-[#31505b] hover:border-[#197263] hover:bg-white'
                             }`}
-                            data-testid={`button-time-${slot.replaceAll(' ', '-').replaceAll(':', '')}`}
+                            data-testid={`button-time-${slot.label.replaceAll(' ', '-').replaceAll(':', '')}`}
                           >
-                            <span>{slot}</span>
-                            <span
-                              className={`text-[9px] font-medium mt-0.5 ${
-                                isSelected ? 'text-white/80' : 'text-[#849b9f]'
-                              }`}
-                            >
-                              {isFull ? 'Full' : `${timingConfig.appointmentsPerHour - bookedCount} left`}
+                            <div className="flex items-center gap-2.5">
+                              <Clock className={`size-4 shrink-0 ${isSelected ? 'text-white' : 'text-[#197263]'}`} />
+                              <div>
+                                <p className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-[#153247]'}`}>
+                                  {slot.label}
+                                </p>
+                                <p className={`text-[11px] font-medium mt-0.5 ${isSelected ? 'text-white/80' : 'text-[#718a90]'}`}>
+                                  {isFull ? 'Full (All 12 booked)' : `${remaining} of ${slot.capacity} appointments available`}
+                                </p>
+                              </div>
+                            </div>
+                            <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 ${
+                              isSelected
+                                ? 'bg-white/20 text-white'
+                                : isFull
+                                ? 'bg-gray-200 text-gray-500'
+                                : 'bg-[#e4f4ee] text-[#197263]'
+                            }`}>
+                              {isFull ? 'Full' : `${remaining} left`}
                             </span>
                           </button>
                         );

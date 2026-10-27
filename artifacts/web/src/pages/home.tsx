@@ -420,12 +420,14 @@ function Home() {
             <a href="#voices" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-reviews">{text.nav.reviews}</a>
             <a href="#faq" className="focus-ring text-sm font-semibold text-[#587078] transition hover:text-[#153247]" data-testid="link-faq">{text.nav.faq}</a>
           </nav>
-          <div className="hidden items-center gap-5 md:flex">
+          <div className="hidden items-center gap-3.5 md:flex">
             <button onClick={() => setLanguage((current) => current === 'en' ? 'ur' : 'en')} className="focus-ring rounded-full border border-[#b8cbc6] px-3 py-2 text-xs font-bold text-[#31505b] transition hover:border-[#197263] hover:text-[#197263]" aria-label={`Switch to ${text.switchLanguage}`} data-testid="button-language-toggle">{text.switchLanguage}</button>
             <a href={`tel:${clinicPhone.replace(/[^\d+]/g, '')}`} className="focus-ring flex items-center gap-2 text-sm font-bold text-[#197263]" data-testid="link-header-phone"><Phone className="size-4" /> {text.nav.call}</a>
             <button onClick={openAppointment} className="focus-ring rounded-full bg-[#153247] px-5 py-2.5 text-sm font-bold text-[#fbf8f0] transition hover:-translate-y-0.5 hover:bg-[#214c64]" data-testid="button-header-appointment">{text.nav.visit}</button>
+            <a href="/admin" className="focus-ring inline-flex items-center gap-1.5 rounded-full border border-[#cbd9d6] bg-[#f8fbf9] px-3.5 py-2 text-xs font-bold text-[#197263] shadow-sm transition hover:border-[#197263] hover:bg-[#eaf4f0]" data-testid="button-header-admin"><ShieldCheck className="size-3.5 text-[#197263]" /> Admin Login</a>
           </div>
           <div className="absolute right-5 top-1/2 flex -translate-y-1/2 items-center gap-2 md:static md:translate-y-0">
+            <a href="/admin" className="focus-ring inline-flex items-center gap-1 rounded-full border border-[#cbd9d6] bg-[#f8fbf9] px-2.5 py-1.5 text-[10px] font-bold text-[#197263] md:hidden" aria-label="Admin Login"><ShieldCheck className="size-3 text-[#197263]" /> Admin</a>
             <button onClick={openAppointment} className="focus-ring rounded-full bg-[#173b60] px-3 py-2 text-[10px] font-bold text-white md:hidden" data-testid="button-mobile-header-appointment">{text.nav.book}</button>
           </div>
         </div>
@@ -443,6 +445,7 @@ function Home() {
               ].map(([label, href]) => (
                 <a key={href} href={href} onClick={() => setMobileOpen(false)} className="rounded-xl px-3 py-3 text-sm font-semibold text-[#31505b] hover:bg-[#eaf0ed]" data-testid={`link-mobile-${label.toLowerCase().replaceAll(' ', '-')}`}>{label}</a>
               ))}
+              <a href="/admin" onClick={() => setMobileOpen(false)} className="mt-2 flex items-center gap-2 rounded-xl border border-[#cbe1d9] bg-[#eef7f4] px-4 py-3 text-sm font-bold text-[#197263]" data-testid="link-mobile-admin"><ShieldCheck className="size-4" /> Admin Portal Login</a>
             </nav>
             <button onClick={openAppointment} className="mt-3 w-full rounded-full bg-[#153247] px-5 py-3 text-sm font-bold text-[#fbf8f0]" data-testid="button-mobile-appointment">{text.nav.visit}</button>
           </div>

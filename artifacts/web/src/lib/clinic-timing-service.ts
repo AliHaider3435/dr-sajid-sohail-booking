@@ -5,11 +5,17 @@ export type DaySchedule = {
   label: string;     // Display label
 };
 
+export type TimeSlot = {
+  id: string;        // e.g. "3:30 PM – 4:30 PM"
+  label: string;     // e.g. "3:30 PM – 4:30 PM"
+  capacity: number;  // e.g. 12 appointments per hour
+};
+
 export type ClinicTimingConfig = {
   monToSat: DaySchedule;
   sunday: DaySchedule;
-  appointmentsPerHour: number; // e.g. 12
-  slotIntervalMinutes: number; // e.g. 5 minutes for 12 per hour
+  appointmentsPerHour: number; // 12 appointments in one hour
+  slotIntervalMinutes: number; // 60 mins for 1-hour blocks
   clinicName: string;
   clinicAddress: string;
   clinicCity: string;
@@ -34,8 +40,8 @@ export const DEFAULT_CLINIC_CONFIG: ClinicTimingConfig = {
     endTime: '20:00',   // 8:00 PM
     label: 'Sunday',
   },
-  appointmentsPerHour: 12,
-  slotIntervalMinutes: 5, // 60 mins / 12 = 5 min slots
+  appointmentsPerHour: 12, // 12 appointments per 1 hour
+  slotIntervalMinutes: 60, // 1-hour consultation blocks
   clinicName: 'Rahmania Medical Center, Layyah',
   clinicAddress: 'Employees Colony, Layyah',
   clinicCity: 'Layyah',
@@ -89,6 +95,7 @@ export function getClinicTimingConfig(): ClinicTimingConfig {
       ...parsed,
       monToSat: { ...DEFAULT_CLINIC_CONFIG.monToSat, ...parsed.monToSat },
       sunday: { ...DEFAULT_CLINIC_CONFIG.sunday, ...parsed.sunday },
+      appointmentsPerHour: parsed.appointmentsPerHour || 12,
     };
   } catch {
     return DEFAULT_CLINIC_CONFIG;
@@ -112,7 +119,6 @@ export function saveClinicTimingConfig(config: ClinicTimingConfig): void {
  * Get schedule for a specific date (checking whether it is Sunday or Mon-Sat)
  */
 export function getScheduleForDate(dateStr: string, config = getClinicTimingConfig()): DaySchedule {
-  // Parse date safely
   const [year, month, day] = dateStr.split('-').map(Number);
   const dateObj = new Date(year, (month || 1) - 1, day || 1);
   const dayOfWeek = dateObj.getDay(); // 0 is Sunday
@@ -124,11 +130,15 @@ export function getScheduleForDate(dateStr: string, config = getClinicTimingConf
 }
 
 /**
- * Dynamically generate time slots for a given date
- * Respects Mon-Sat (3:30 PM - 9:00 PM) vs Sunday (12:00 PM - 8:00 PM)
- * and generates 12 appointment slots per hour (every 5 mins).
+ * Dynamically generate 1-hour time slots for a given date.
+ * Each 1-hour window accommodates 12 appointments per hour.
+ * - Mon–Sat: 3:30 PM – 9:00 PM (12 appointments/hour)
+ * - Sunday: 12:00 PM – 8:00 PM (12 appointments/hour)
  */
-export function generateSlotsForDate(dateStr: string, config = getClinicTimingConfig()): string[] {
+export function generateSlotsForDate(
+  dateStr: string,
+  config = getClinicTimingConfig()
+): TimeSlot[] {
   const schedule = getScheduleForDate(dateStr, config);
   if (!schedule.active) return [];
 
@@ -137,17 +147,39 @@ export function generateSlotsForDate(dateStr: string, config = getClinicTimingCo
 
   if (startMinutes >= endMinutes) return [];
 
-  // Interval based on appointments per hour (e.g. 60 / 12 = 5 mins)
   const apptsPerHour = Math.max(1, config.appointmentsPerHour || 12);
-  const interval = Math.max(1, Math.floor(60 / apptsPerHour));
+  const slots: TimeSlot[] = [];
 
-  const slots: string[] = [];
-  for (let m = startMinutes; m <= endMinutes; m += interval) {
-    const hour = Math.floor(m / 60);
-    const minute = m % 60;
-    const period = hour >= 12 ? 'PM' : 'AM';
-    const displayHour = hour % 12 || 12;
-    slots.push(`${displayHour}:${String(minute).padStart(2, '0')} ${period}`);
+  let current = startMinutes;
+  while (current < endMinutes) {
+    const next = Math.min(current + 60, endMinutes);
+    const duration = next - current;
+    // Full hour has apptsPerHour (12), partial hour proportionally
+    const capacity =
+      duration >= 60
+        ? apptsPerHour
+        : Math.max(1, Math.round(apptsPerHour * (duration / 60)));
+
+    const startH = Math.floor(current / 60);
+    const startM = current % 60;
+    const startPeriod = startH >= 12 ? 'PM' : 'AM';
+    const startDisplayH = startH % 12 || 12;
+    const startStr = `${startDisplayH}:${String(startM).padStart(2, '0')} ${startPeriod}`;
+
+    const endH = Math.floor(next / 60);
+    const endM = next % 60;
+    const endPeriod = endH >= 12 ? 'PM' : 'AM';
+    const endDisplayH = endH % 12 || 12;
+    const endStr = `${endDisplayH}:${String(endM).padStart(2, '0')} ${endPeriod}`;
+
+    const label = `${startStr} – ${endStr}`;
+    slots.push({
+      id: label,
+      label,
+      capacity,
+    });
+
+    current = next;
   }
 
   return slots;

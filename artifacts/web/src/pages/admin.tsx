@@ -819,14 +819,12 @@ export default function AdminPage() {
                         }
                         className="mt-1.5 w-full rounded-xl border border-[#cbd9d6] bg-white px-3 py-2.5 text-sm font-semibold text-[#153247] outline-none focus:border-[#197263]"
                       >
-                        <option value={5}>5 Minutes (12 slots per hour)</option>
-                        <option value={10}>10 Minutes (6 slots per hour)</option>
-                        <option value={15}>15 Minutes (4 slots per hour)</option>
-                        <option value={30}>30 Minutes (2 slots per hour)</option>
-                        <option value={60}>60 Minutes (Hourly block)</option>
+                        <option value={60}>60 Minutes (1-Hour Consultation Block · 12 appts/hr)</option>
+                        <option value={30}>30 Minutes (Half-Hour Block · 6 appts/block)</option>
+                        <option value={15}>15 Minutes (Quarter-Hour Block · 3 appts/block)</option>
                       </select>
                       <span className="mt-1 block text-[11px] text-[#718a90]">
-                        Determines the time gap between generated slots
+                        Standard 1-hour blocks accommodate up to 12 patients per hour
                       </span>
                     </div>
                   </div>
