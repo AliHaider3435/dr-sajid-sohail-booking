@@ -12,6 +12,8 @@ import {
   Router as WouterRouter,
 } from 'wouter';
 
+import AdminPage from '@/pages/admin';
+
 const queryClient = new QueryClient();
 
 function Router() {
@@ -21,6 +23,8 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/admin" component={AdminPage} />
+        <Route path="/admin/login" component={AdminPage} />
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>

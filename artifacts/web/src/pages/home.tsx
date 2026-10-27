@@ -26,6 +26,9 @@ import {
   ShieldCheck,
   Sparkles,
   Stethoscope,
+  Video,
+  Play,
+  Star,
   X,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -34,6 +37,13 @@ import { z } from 'zod';
 import { Form } from '@/components/ui/form';
 import { AppointmentModal as BookingModal } from '@/components/appointment-modal';
 import { clinicCopy, copy, type ClinicId, type Language } from '@/lib/i18n';
+import {
+  getClinicTimingConfig,
+  getClinicScheduleSummary,
+  formatTime24to12,
+  type ClinicTimingConfig,
+} from '@/lib/clinic-timing-service';
+import { getPatientStories, type PatientStory } from '@/lib/patient-stories-service';
 
 const appointmentSchema = z.object({
   clinicLocation: z.enum(['layyah'], {
@@ -342,6 +352,10 @@ function Home() {
     return window.localStorage.getItem('neurotower-language') === 'ur' ? 'ur' : 'en';
   });
   const text = copy[language];
+  const [timingConfig, setTimingConfig] = useState<ClinicTimingConfig>(getClinicTimingConfig());
+  const [patientStories, setPatientStories] = useState<PatientStory[]>(getPatientStories(true));
+  const [videoModalUrl, setVideoModalUrl] = useState<string | null>(null);
+
   const availabilityQuery = useGetAppointmentAvailability({
     query: { queryKey: getGetAppointmentAvailabilityQueryKey(), staleTime: 300_000 },
   });
@@ -352,8 +366,23 @@ function Home() {
   const requestsInReview = appointmentsQuery.data?.length ?? 0;
   const availableClinics = availability?.clinics?.filter((clinic) => clinic.id === 'layyah') ?? [];
   const clinics = availableClinics.length ? availableClinics : fallbackClinics;
-  const clinicPhone = '0300 5809938';
-  const localizedReviews = reviews[language];
+  const clinicPhone = timingConfig.phone || '0300 5809938';
+  const scheduleSummary = getClinicScheduleSummary(timingConfig);
+
+  useEffect(() => {
+    const handleTimingUpdate = (e: any) => {
+      if (e.detail) setTimingConfig(e.detail);
+    };
+    const handleStoriesUpdate = (e: any) => {
+      if (e.detail) setPatientStories(e.detail.filter((s: PatientStory) => s.isPublished));
+    };
+    window.addEventListener('clinic_timing_updated', handleTimingUpdate);
+    window.addEventListener('patient_stories_updated', handleStoriesUpdate);
+    return () => {
+      window.removeEventListener('clinic_timing_updated', handleTimingUpdate);
+      window.removeEventListener('patient_stories_updated', handleStoriesUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem('neurotower-language', language);
@@ -370,9 +399,11 @@ function Home() {
     <main className={`doctor-now-layout grain min-h-[100dvh] overflow-hidden bg-white pb-16 text-[#153247] md:pb-0 ${language === 'ur' ? 'urdu-copy' : ''}`}>
       <div className="border-b border-[#e5e9f2] bg-[#f0f1f4]">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-5 py-2 text-[11px] font-semibold text-[#526479] lg:px-10">
-          <span>Rahmania Medical Center · Layyah</span>
-          <span className="hidden sm:inline">Daily appointments · 4:00 PM – 8:00 PM</span>
-          <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-[#158b8b] hover:text-[#116e70]">{clinicPhone}</a>
+          <span>{timingConfig.clinicName}</span>
+          <span className="hidden sm:inline">
+            {scheduleSummary.fullSchedule} ({timingConfig.appointmentsPerHour} slots/hr)
+          </span>
+          <a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="text-[#158b8b] hover:text-[#116e70] font-bold">{clinicPhone}</a>
         </div>
       </div>
       <header className="doctor-now-header sticky top-0 z-20 border-b border-[#e5e9f2] bg-white/95 backdrop-blur-md">
@@ -610,7 +641,14 @@ function Home() {
                     <p className="text-xs font-bold uppercase tracking-[.13em] text-[#197263]">{details.city} {text.clinic.clinic}</p>
                     <p className="mt-2 text-lg font-bold text-[#153247]">Rahmania Medical Center, Layyah</p>
                     <p className="mt-1 max-w-xl text-sm leading-6 text-[#587078]">{details.address}</p>
-                    <div className="mt-4 grid gap-1.5 text-xs text-[#315b61]">{details.schedule.map((item) => <p key={`${clinic.id}-${item.days}`}><span className="font-bold">{item.days}:</span> {item.hours}{item.note ? ` · ${item.note}` : ''}</p>)}</div>
+                    <div className="mt-4 grid gap-1.5 text-xs text-[#315b61]">
+                      <p><span className="font-bold">Mon – Sat:</span> {formatTime24to12(timingConfig.monToSat.startTime)} – {formatTime24to12(timingConfig.monToSat.endTime)}</p>
+                      <p><span className="font-bold">Sunday:</span> {formatTime24to12(timingConfig.sunday.startTime)} – {formatTime24to12(timingConfig.sunday.endTime)}</p>
+                      <p className="text-[11px] font-semibold text-[#197263]">Capacity: {timingConfig.appointmentsPerHour} patient consultations / hour</p>
+                      {timingConfig.customNotice && (
+                        <p className="mt-1 text-[11px] font-bold text-[#a17525]">{timingConfig.customNotice}</p>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <a href={clinicDirectionsUrl} target="_blank" rel="noreferrer" className="focus-ring mt-5 inline-flex shrink-0 items-center gap-2 text-sm font-bold text-[#197263] sm:mt-1" data-testid={`link-clinic-directions-${clinic.id}`}>{text.clinic.directions} <ArrowUpRight className="size-4" /></a>
@@ -632,22 +670,114 @@ function Home() {
         </div>
       </section>
 
+      {/* Dynamic Patient Stories Section */}
       <section id="voices" className="scroll-mt-20 bg-[#f7f8fc]">
         <div className="mx-auto max-w-7xl px-5 py-20 lg:px-10 lg:py-28">
           <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-             <div><p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#a17525]">{text.reviews.eyebrow}</p><h2 className="display-face mt-4 text-4xl font-semibold text-[#153247] sm:text-5xl">{text.reviews.title}</h2></div>
-             <div className="flex items-center gap-2 text-sm font-bold text-[#a17525]" data-testid="status-review-proof"><BadgeCheck className="size-5" /> {text.reviews.trust}</div>
+             <div>
+               <p className="mono-face text-[10px] font-bold uppercase tracking-[.23em] text-[#a17525]">Patient Stories & Recovery</p>
+               <h2 className="display-face mt-4 text-4xl font-semibold text-[#153247] sm:text-5xl">Real Patient Experiences</h2>
+             </div>
+             <div className="flex items-center gap-2 text-sm font-bold text-[#a17525]" data-testid="status-review-proof">
+               <BadgeCheck className="size-5" /> Verified Consultations & Surgeries
+             </div>
           </div>
-          <div className="mt-12 grid gap-4 lg:grid-cols-3">
-             {localizedReviews.map((review, index) => (
-              <figure key={review.name} className="lift-card flex min-h-[260px] flex-col justify-between rounded-[24px] border border-[#e0d4b9] bg-[#fbf8f0] p-7" data-testid={`card-review-${index}`}>
-                <div><div className="flex gap-1 text-[#d09b29]" aria-label="5 out of 5 stars">{[0, 1, 2, 3, 4].map((star) => <Sparkles key={star} className="size-3.5 fill-current" />)}</div><blockquote className="mt-6 text-lg font-medium leading-7 text-[#31505b]">“{review.quote}”</blockquote></div>
-                <figcaption className="mt-7 border-t border-[#e6dbc3] pt-4"><p className="text-sm font-bold text-[#153247]">{review.name}</p><p className="mt-1 text-xs text-[#8b7d61]">{review.context}</p></figcaption>
+
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+             {patientStories.map((story, index) => (
+              <figure key={story.id || index} className="lift-card flex min-h-[300px] flex-col justify-between rounded-[24px] border border-[#e0d4b9] bg-[#fbf8f0] p-6 shadow-sm">
+                <div>
+                  {/* Media Header (Picture or Video badge) */}
+                  {story.imageUrl && (
+                    <div className="relative mb-4 overflow-hidden rounded-2xl border border-[#d8cfbe] bg-[#eef3f1]">
+                      <img
+                        src={story.imageUrl}
+                        alt={story.patientName}
+                        className="h-44 w-full object-cover transition duration-300 hover:scale-105"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = 'none';
+                        }}
+                      />
+                      {story.videoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setVideoModalUrl(story.videoUrl || null)}
+                          className="absolute inset-0 flex items-center justify-center bg-black/35 text-white transition hover:bg-black/50"
+                        >
+                          <div className="grid size-12 place-items-center rounded-full bg-[#197263] text-white shadow-lg">
+                            <Play className="ml-0.5 size-5 fill-current" />
+                          </div>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {!story.imageUrl && story.videoUrl && (
+                    <div className="mb-4">
+                      <button
+                        type="button"
+                        onClick={() => setVideoModalUrl(story.videoUrl || null)}
+                        className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#b8d4cb] bg-[#e7f3ef] py-6 text-sm font-bold text-[#197263] transition hover:bg-[#d8ece5]"
+                      >
+                        <Play className="size-5 fill-current" /> Watch Video Story
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex items-center gap-1 text-[#d09b29]" aria-label="5 out of 5 stars">
+                    {Array.from({ length: story.rating || 5 }).map((_, star) => (
+                      <Star key={star} className="size-3.5 fill-current" />
+                    ))}
+                  </div>
+
+                  <blockquote className="mt-4 text-base font-medium leading-relaxed text-[#31505b]">
+                    “{story.message}”
+                  </blockquote>
+                </div>
+
+                <figcaption className="mt-6 border-t border-[#e6dbc3] pt-4">
+                  <p className="text-sm font-bold text-[#153247]">{story.patientName}</p>
+                  <p className="text-xs font-semibold text-[#197263]">{story.treatment}</p>
+                  <p className="mt-0.5 text-[11px] text-[#8b7d61]">{story.context}</p>
+                </figcaption>
               </figure>
             ))}
           </div>
         </div>
       </section>
+
+      {/* Video Modal Player */}
+      {videoModalUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="relative w-full max-w-3xl overflow-hidden rounded-3xl bg-black shadow-2xl">
+            <button
+              onClick={() => setVideoModalUrl(null)}
+              className="absolute right-3 top-3 z-10 rounded-full bg-black/60 p-2 text-white hover:bg-black"
+            >
+              <X className="size-5" />
+            </button>
+            <div className="aspect-video w-full">
+              {videoModalUrl.includes('youtube.com') || videoModalUrl.includes('youtu.be') ? (
+                <iframe
+                  src={
+                    videoModalUrl.includes('watch?v=')
+                      ? videoModalUrl.replace('watch?v=', 'embed/')
+                      : videoModalUrl.includes('youtu.be/')
+                      ? videoModalUrl.replace('youtu.be/', 'www.youtube.com/embed/')
+                      : videoModalUrl
+                  }
+                  title="Patient Story Video"
+                  className="size-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              ) : (
+                <video src={videoModalUrl} controls autoPlay className="size-full object-contain" />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <section id="faq" className="scroll-mt-20 bg-[#fbf8f0]">
         <div className="mx-auto max-w-4xl px-5 py-16 lg:px-10 lg:py-24">
@@ -679,7 +809,7 @@ function Home() {
         <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 lg:grid-cols-[1fr_auto_auto] lg:px-10">
            <div><BrandMark inverse /><p className="mt-5 max-w-xs text-sm leading-6 text-[#88a5ab]">{text.footer.brainSpine}</p></div>
            <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.contact}</p><a href={`tel:${clinicPhone.replace(/\s/g, '')}`} className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-phone">{clinicPhone}</a><a href="mailto:care@neurotower.pk" className="focus-ring mt-2 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-email"><Mail className="mr-1.5 inline size-3.5" />care@neurotower.pk</a></div>
-           <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.navigate}</p><a href="#top" className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-top">{text.footer.top}</a><p className="mt-2 text-sm text-[#88a5ab]" data-testid="text-review-queue">{appointmentsQuery.isError ? text.footer.helping : requestsInReview > 0 ? text.footer.request : text.footer.requests}</p></div>
+           <div><p className="text-xs font-bold uppercase tracking-[.15em] text-[#f2c55f]">{text.footer.navigate}</p><a href="#top" className="focus-ring mt-4 block text-sm font-semibold hover:text-[#fbf8f0]" data-testid="link-footer-top">{text.footer.top}</a><p className="mt-2 text-sm text-[#88a5ab]" data-testid="text-review-queue">{appointmentsQuery.isError ? text.footer.helping : requestsInReview > 0 ? text.footer.request : text.footer.requests}</p><a href="/admin" className="focus-ring mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#f2c55f] hover:underline" data-testid="link-admin-login">🔐 Admin Portal Login →</a></div>
         </div>
          <div className="border-t border-[#274658]"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 text-xs text-[#6f9198] sm:flex-row sm:items-center sm:justify-between lg:px-10"><span>© {new Date().getFullYear()} Dr. Sajid Sohail · Rahmania Medical Center, Layyah</span><span>{text.footer.urgent}</span></div></div>
       </footer>

@@ -10,14 +10,20 @@ export const clinicCopy: Record<Language, Record<ClinicId, {
     layyah: {
       city: 'Layyah',
       address: 'Employees Colony, Layyah',
-      schedule: [{ days: 'Daily', hours: '4:00 PM – 8:00 PM', note: 'Endoscopic brain & spine clinic' }],
+      schedule: [
+        { days: 'Monday – Saturday', hours: '3:30 PM – 9:00 PM', note: '12 appointments / hour' },
+        { days: 'Sunday', hours: '12:00 PM – 8:00 PM', note: 'Weekend consultation' },
+      ],
     },
   },
   ur: {
     layyah: {
       city: 'لیہ',
       address: 'ایمپلائز کالونی، لیہ',
-      schedule: [{ days: 'روزانہ', hours: 'شام 4:00 – رات 8:00 بجے', note: 'اینڈوسکوپک دماغ اور ریڑھ کی ہڈی کلینک' }],
+      schedule: [
+        { days: 'پیر تا ہفتہ', hours: 'دوپہر 3:30 – رات 9:00 بجے', note: '12 معائنے فی گھنٹہ' },
+        { days: 'اتوار', hours: 'دوپہر 12:00 – رات 8:00 بجے', note: 'ویک اینڈ کلینک' },
+      ],
     },
   },
 };
